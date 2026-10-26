@@ -49,7 +49,10 @@ export const ABSENCE_STATUSES = [
   "prekazky_zamestnavatel",
 ] as const;
 
-export const STATUSES = ["pritomen", ...ABSENCE_STATUSES, "svatek"] as const;
+/** Everything except "přítomen": the absence reasons plus public holidays. */
+export const NON_WORK_STATUSES = [...ABSENCE_STATUSES, "svatek"] as const;
+
+export const STATUSES = ["pritomen", ...NON_WORK_STATUSES] as const;
 export type Status = (typeof STATUSES)[number];
 
 export const statusSchema = z.enum(STATUSES);
@@ -65,7 +68,7 @@ export const STATUS_LABEL: Record<Status, string> = {
   svatek: "Svátek",
 };
 
-/** For narrow places: the day-row select, table headings, the PDF. */
+/** Short labels for narrow places. */
 export const STATUS_SHORT: Record<Status, string> = {
   pritomen: "Přítomen",
   dovolena: "Dovolená",

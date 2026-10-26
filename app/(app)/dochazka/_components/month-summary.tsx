@@ -17,13 +17,14 @@ import {
 } from "@/components/ui/table";
 import { plural } from "@/lib/attendance/calendar";
 import {
-  ABSENCE_STATUSES,
+  NON_WORK_STATUSES,
   STATUS_LABEL,
   STATUS_SHORT,
-  type Status,
 } from "@/lib/attendance/model";
 import {
+  formatDays,
   formatHours,
+  HOURS_NOTE,
   type StatusTotals,
   summarizeMonth,
   type Tally,
@@ -31,15 +32,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
 
-const ABSENCE_COLUMNS: Status[] = [...ABSENCE_STATUSES, "svatek"];
-
 function TallyCell({ tally }: { tally: Tally }) {
   if (tally.days === 0) {
     return <span className="text-muted-foreground">—</span>;
   }
   return (
     <span className="grid tabular-nums leading-tight">
-      <span>{plural(tally.days, "den", "dny", "dní")}</span>
+      <span>{formatDays(tally.days)}</span>
       <span className="text-xs text-muted-foreground">
         {formatHours(tally.minutes)} h
       </span>
@@ -56,7 +55,7 @@ function SummaryCells({ totals }: { totals: StatusTotals }) {
       <TableCell className="text-right font-semibold tabular-nums">
         {formatHours(totals.pritomen.minutes)}
       </TableCell>
-      {ABSENCE_COLUMNS.map((status) => (
+      {NON_WORK_STATUSES.map((status) => (
         <TableCell key={status}>
           <TallyCell tally={totals[status]} />
         </TableCell>
@@ -65,7 +64,7 @@ function SummaryCells({ totals }: { totals: StatusTotals }) {
   );
 }
 
-export function MonthSummary({ month }: { month: string }) {
+export function MonthSummaryTable({ month }: { month: string }) {
   const sheet = useAttendanceStore((s) => s.months[month]);
   const employees = useAttendanceStore((s) => s.employees);
   const summary = useMemo(
@@ -99,7 +98,7 @@ export function MonthSummary({ month }: { month: string }) {
                 <TableHead className="text-right" title="Odpracované hodiny">
                   Hodiny
                 </TableHead>
-                {ABSENCE_COLUMNS.map((status) => (
+                {NON_WORK_STATUSES.map((status) => (
                   <TableHead key={status} title={STATUS_LABEL[status]}>
                     {STATUS_SHORT[status]}
                   </TableHead>
@@ -132,12 +131,7 @@ export function MonthSummary({ month }: { month: string }) {
         </div>
       </Card>
 
-      <p className="text-xs text-muted-foreground">
-        Odpracované hodiny = konec − začátek − obědová pauza. Pauza na jídlo a
-        oddech se do pracovní doby nezapočítává (§ 88 zákoníku práce).
-        Nepřítomnosti a svátky jsou v hodinách podle směny plánované na daný
-        den.
-      </p>
+      <p className="text-xs text-muted-foreground">{HOURS_NOTE}</p>
     </div>
   );
 }

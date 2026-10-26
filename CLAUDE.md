@@ -24,8 +24,8 @@ database, auth, API route, or worker yet; all data lives in the browser.
   status ranges).
   `summary.ts` computes days/hours per employee and status (hours = end −
   start − lunch break, § 88 ZP; absences count the planned shift).
-  `pdf.ts` builds the month PDF (pdfmake, A4 portrait, brand styling, last
-  page = hours summary,
+  `pdf.ts` builds the month PDF (pdfmake, A4 portrait, brand styling; the
+  last page is the hours summary;
   same colour meaning as the clinic's Word sheet); pdfmake + fonts load only
   on click. pdfmake mutates cell objects during layout, so never share a cell
   or row object between table positions.
@@ -59,9 +59,9 @@ database, auth, API route, or worker yet; all data lives in the browser.
   filenames.
 - Verify changes with `npm test`, `npm run typecheck`, `npm run lint`,
   `npm run build`.
-- Statuses: `pritomen`, the clinic's absence reasons (`ABSENCE_STATUSES`:
-  dovolená, neplacené volno, pracovní cesta, pracovní neschopnost (PN), OČR, překážky na straně
-  zaměstnavatele) and `svatek`.
+- Statuses: `pritomen`, the clinic's absence reasons (`ABSENCE_STATUSES`,
+  labels in `STATUS_LABEL` / `STATUS_SHORT`) and `svatek`; every non-work
+  status is `NON_WORK_STATUSES`.
 - Contract colours (HPP navy, DPČ blue, DPP grey) are theme tokens
   `--contract-*` used by `ContractBadge`; the PDF mirrors them.
 - Shared helpers live in `src/lib/attendance/calendar.ts` (`plural`,

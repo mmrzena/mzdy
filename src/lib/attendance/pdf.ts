@@ -17,18 +17,19 @@ import {
   WEEKDAY_NAMES,
 } from "./calendar";
 import {
-  ABSENCE_STATUSES,
   CONTRACT_LABEL,
   type ContractType,
   type Employee,
   type Entry,
   type MonthSheet,
+  NON_WORK_STATUSES,
   STATUS_SHORT,
-  type Status,
 } from "./model";
 import {
+  formatDays,
   formatHours,
-  type MonthSummary,
+  HOURS_NOTE,
+  type MonthTotals,
   type StatusTotals,
   summarizeMonth,
 } from "./summary";
@@ -41,7 +42,9 @@ import {
  */
 
 const C = {
+  white: "#ffffff",
   navy: "#0f1f3d",
+  blueDark: "#0a2f4f",
   ink: "#1e293b",
   slate: "#4c5f7a",
   muted: "#8a97ab",
@@ -55,14 +58,13 @@ const C = {
   dpcSwatch: "#b4c6e7",
   dppFill: "#f1f3f6",
   dppSwatch: "#d5dae2",
-  hppSwatch: "#0f1f3d",
 };
 
 /** Badge colours, matching the app's ContractBadge (theme.css). */
 const CONTRACT_BADGE: Record<ContractType, { fill: string; color: string }> = {
-  HPP: { fill: C.hppSwatch, color: "#ffffff" },
-  DPC: { fill: C.dpcSwatch, color: "#0a2f4f" },
-  DPP: { fill: C.dppSwatch, color: "#1e293b" },
+  HPP: { fill: C.navy, color: C.white },
+  DPC: { fill: C.dpcSwatch, color: C.blueDark },
+  DPP: { fill: C.dppSwatch, color: C.ink },
 };
 
 const FILL_BY_CONTRACT: Record<ContractType, string | undefined> = {
@@ -93,26 +95,39 @@ const cellPadding = {
   paddingBottom: () => 2.5,
 };
 
+type Heading = { text: string; alignment?: "right" };
+
+function headingRow(headings: Heading[]): TableCell[] {
+  return headings.map(({ text, alignment }) => ({
+    text: text.toUpperCase(),
+    alignment,
+    fontSize: 7,
+    bold: true,
+    color: C.slate,
+    characterSpacing: 0.6,
+  }));
+}
+
+/** Rules between body rows; the line under the heading row is navy. */
+function ruleWidth(i: number, rowCount: number) {
+  if (i === 0) return 0;
+  if (i === 1 || i === rowCount - 1) return 1;
+  return 0.5;
+}
+
 function columnHeader(): Content {
-  const labels = [
-    "Den",
-    "Zaměstnanec",
-    "Od",
-    "Do",
-    "Obědová pauza",
-    "Přítomnost",
-  ];
   return {
     table: {
       widths: WIDTHS,
       body: [
-        labels.map((text) => ({
-          text: text.toUpperCase(),
-          fontSize: 7,
-          bold: true,
-          color: C.slate,
-          characterSpacing: 0.6,
-        })),
+        headingRow([
+          { text: "Den" },
+          { text: "Zaměstnanec" },
+          { text: "Od" },
+          { text: "Do" },
+          { text: "Obědová pauza" },
+          { text: "Přítomnost" },
+        ]),
       ],
     },
     layout: {
@@ -229,18 +244,16 @@ function legendItem(color: string, label: string): Column {
   };
 }
 
-const SUMMARY_ABSENCES: Status[] = [...ABSENCE_STATUSES, "svatek"];
-
 /** Each non-zero absence on its own line: "Dovolená   2 dny · 16 h". */
 function absenceLines(totals: StatusTotals): TableCell {
-  const lines = SUMMARY_ABSENCES.filter((s) => totals[s].days > 0).map(
+  const lines = NON_WORK_STATUSES.filter((s) => totals[s].days > 0).map(
     (s): Content => ({
       columns: [
         { width: 62, text: STATUS_SHORT[s], color: C.slate },
         {
           width: "*",
           text: [
-            plural(totals[s].days, "den", "dny", "dní"),
+            formatDays(totals[s].days),
             {
               text: ` · ${formatHours(totals[s].minutes)} h`,
               color: C.slate,
@@ -253,14 +266,8 @@ function absenceLines(totals: StatusTotals): TableCell {
   return lines.length > 0 ? { stack: lines } : { text: "—", color: C.muted };
 }
 
-function summaryRow(
-  name: TableCell,
-  contract: TableCell,
-  totals: StatusTotals,
-): TableCell[] {
+function totalsCells(totals: StatusTotals): TableCell[] {
   return [
-    name,
-    contract,
     { text: String(totals.pritomen.days), alignment: "right" },
     {
       text: formatHours(totals.pritomen.minutes),
@@ -300,33 +307,24 @@ function contractBadge(contract: ContractType): TableCell {
 }
 
 /** The last page: days and hours per employee, for payroll. */
-function summarySection(summary: MonthSummary): Content {
-  const head = [
-    "Zaměstnanec",
-    "Úvazek",
-    "Dny",
-    "Hodiny",
-    "Nepřítomnost a svátky",
-  ].map((text, i) => ({
-    text: text.toUpperCase(),
-    fontSize: 7,
-    bold: true,
-    color: C.slate,
-    characterSpacing: 0.6,
-    alignment: i === 2 || i === 3 ? ("right" as const) : undefined,
-  }));
-  const rows = summary.rows.map(({ employee, totals }) =>
-    summaryRow(
-      { text: employee.name },
-      contractBadge(employee.contract),
-      totals,
-    ),
-  );
-  const totalRow = summaryRow(
+function summarySection(summary: MonthTotals): Content {
+  const head = headingRow([
+    { text: "Zaměstnanec" },
+    { text: "Úvazek" },
+    { text: "Dny", alignment: "right" },
+    { text: "Hodiny", alignment: "right" },
+    { text: "Nepřítomnost a svátky" },
+  ]);
+  const rows = summary.rows.map(({ employee, totals }) => [
+    { text: employee.name },
+    contractBadge(employee.contract),
+    ...totalsCells(totals),
+  ]);
+  const totalRow = [
     { text: "Celkem", bold: true },
     { text: "" },
-    summary.total,
-  );
+    ...totalsCells(summary.total),
+  ];
   return {
     pageBreak: "before",
     stack: [
@@ -337,12 +335,10 @@ function summarySection(summary: MonthSummary): Content {
           body: [head, ...rows, totalRow],
         },
         layout: {
-          paddingLeft: (i: number) => (i === 0 ? 0 : 6),
-          paddingRight: () => 6,
+          ...cellPadding,
           paddingTop: () => 4,
           paddingBottom: () => 4,
-          hLineWidth: (i: number, node) =>
-            i === 1 || i === node.table.body.length - 1 ? 1 : i === 0 ? 0 : 0.5,
+          hLineWidth: (i: number, node) => ruleWidth(i, node.table.body.length),
           hLineColor: (i: number) => (i === 1 ? C.navy : C.rule),
           vLineWidth: () => 0,
         },
@@ -352,12 +348,64 @@ function summarySection(summary: MonthSummary): Content {
         fontSize: 7.5,
         color: C.slate,
         text:
-          "Hodiny = konec − začátek − obědová pauza (pauza na jídlo a oddech se do pracovní doby nezapočítává, § 88 zákoníku práce). " +
-          "Nepřítomnosti a svátky jsou v hodinách podle směny plánované na daný den." +
+          HOURS_NOTE +
           (summary.invalid > 0
             ? ` ${plural(summary.invalid, "záznam s neplatným časem není", "záznamy s neplatným časem nejsou", "záznamů s neplatným časem není")} v hodinách započítán.`
             : ""),
       },
+    ],
+  };
+}
+
+/** Which header a page gets: the title page, day pages, or the summary. */
+type PageKind = "title" | "days" | "summary";
+
+function pageKind(
+  page: number,
+  pageCount: number,
+  hasSummary: boolean,
+): PageKind {
+  // The summary starts on a new page after the days and fits on one page for
+  // a clinic-sized team, so it is the last page.
+  if (hasSummary && page === pageCount) return "summary";
+  if (page === 1) return "title";
+  return "days";
+}
+
+function titleBlock(month: string, people: number, workdays: number): Content {
+  return {
+    margin: [0, 8, 0, 14],
+    columns: [
+      {
+        width: "*",
+        text: [
+          { text: "Docházka  ", fontSize: 18, bold: true, color: C.navy },
+          { text: formatMonth(month), fontSize: 18, color: C.red },
+        ],
+      },
+      {
+        width: "auto",
+        alignment: "right",
+        margin: [0, 6, 0, 0],
+        fontSize: 8.5,
+        color: C.slate,
+        text: `${plural(people, "zaměstnanec", "zaměstnanci", "zaměstnanců")}  ·  ${plural(workdays, "pracovní den", "pracovní dny", "pracovních dnů")}`,
+      },
+    ],
+  };
+}
+
+function continuationBlock(month: string, label: string): Content {
+  return {
+    margin: [0, 8, 0, 21],
+    columns: [
+      {
+        text: `Docházka – ${formatMonth(month)}`,
+        fontSize: 10,
+        bold: true,
+        color: C.navy,
+      },
+      { text: label, alignment: "right", fontSize: 8, color: C.muted },
     ],
   };
 }
@@ -406,9 +454,12 @@ export function attendancePdf(
     },
 
     header: (currentPage: number, pageCount: number, size: ContextPageSize) => {
-      // The summary is always the last page (it starts on a new page and fits
-      // on one for a clinic-sized team), and has its own column headings.
-      const onSummaryPage = hasSummary && currentPage === pageCount;
+      const kind = pageKind(currentPage, pageCount, hasSummary);
+      const blocksByKind: Record<PageKind, Content[]> = {
+        title: [titleBlock(month, people.size, workdays), columnHeader()],
+        days: [continuationBlock(month, "pokračování"), columnHeader()],
+        summary: [continuationBlock(month, "souhrn hodin")],
+      };
       return {
         margin: [MARGIN_X, 28, MARGIN_X, 0],
         stack: [
@@ -424,45 +475,7 @@ export function attendancePdf(
               },
             ],
           },
-          currentPage === 1
-            ? {
-                margin: [0, 8, 0, 14],
-                columns: [
-                  {
-                    width: "*",
-                    text: [
-                      {
-                        text: "Docházka  ",
-                        fontSize: 18,
-                        bold: true,
-                        color: C.navy,
-                      },
-                      { text: formatMonth(month), fontSize: 18, color: C.red },
-                    ],
-                  },
-                  {
-                    width: "auto",
-                    alignment: "right",
-                    margin: [0, 6, 0, 0],
-                    fontSize: 8.5,
-                    color: C.slate,
-                    text: `${plural(people.size, "zaměstnanec", "zaměstnanci", "zaměstnanců")}  ·  ${plural(workdays, "pracovní den", "pracovní dny", "pracovních dnů")}`,
-                  },
-                ],
-              }
-            : {
-                margin: [0, 8, 0, 21],
-                columns: [
-                  { text: title, fontSize: 10, bold: true, color: C.navy },
-                  {
-                    text: onSummaryPage ? "souhrn hodin" : "pokračování",
-                    alignment: "right",
-                    fontSize: 8,
-                    color: C.muted,
-                  },
-                ],
-              },
-          ...(onSummaryPage ? [] : [columnHeader()]),
+          ...blocksByKind[kind],
         ],
       };
     },

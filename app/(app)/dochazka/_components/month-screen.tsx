@@ -52,7 +52,7 @@ import {
 } from "@/stores/attendance-store";
 import { AbsenceDialog } from "./absence-dialog";
 import { DayCard } from "./day-card";
-import { MonthSummary } from "./month-summary";
+import { MonthSummaryTable } from "./month-summary";
 
 type ConfirmKind = "refill" | "clear";
 
@@ -208,7 +208,13 @@ export function MonthScreen({ month }: { month: string }) {
             <RiTimeLine /> Souhrn hodin
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="dny" className="grid min-w-0 gap-3">
+        {/* Kept mounted so switching to the summary keeps scroll position and
+            doesn't rebuild ~300 rows; the summary itself stays lazy. */}
+        <TabsContent
+          value="dny"
+          forceMount
+          className="grid min-w-0 gap-3 data-[state=inactive]:hidden"
+        >
           {days.map((day) => (
             <DayCard
               key={day.date}
@@ -220,7 +226,7 @@ export function MonthScreen({ month }: { month: string }) {
           ))}
         </TabsContent>
         <TabsContent value="souhrn" className="min-w-0">
-          <MonthSummary month={month} />
+          <MonthSummaryTable month={month} />
         </TabsContent>
       </Tabs>
     );

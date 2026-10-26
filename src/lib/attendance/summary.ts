@@ -1,3 +1,4 @@
+import { plural } from "./calendar";
 import {
   type Employee,
   type MonthSheet,
@@ -14,7 +15,7 @@ export type EmployeeSummary = {
   totals: StatusTotals;
 };
 
-export type MonthSummary = {
+export type MonthTotals = {
   /** Employees with at least one entry, in list order. */
   rows: EmployeeSummary[];
   total: StatusTotals;
@@ -36,7 +37,7 @@ function emptyTotals(): StatusTotals {
 export function summarizeMonth(
   sheet: MonthSheet,
   employees: Employee[],
-): MonthSummary {
+): MonthTotals {
   const byEmployee = new Map<string, StatusTotals>();
   const total = emptyTotals();
   let invalid = 0;
@@ -72,3 +73,12 @@ const hoursFormat = new Intl.NumberFormat("cs-CZ", {
 export function formatHours(minutes: number) {
   return hoursFormat.format(minutes / 60);
 }
+
+/** 3 → "3 dny" */
+export function formatDays(days: number) {
+  return plural(days, "den", "dny", "dní");
+}
+
+/** How the hours are counted; shown under the summary on screen and in the PDF. */
+export const HOURS_NOTE =
+  "Odpracované hodiny = konec − začátek − obědová pauza. Pauza na jídlo a oddech se do pracovní doby nezapočítává (§ 88 zákoníku práce). Nepřítomnosti a svátky jsou v hodinách podle směny plánované na daný den.";
