@@ -22,6 +22,10 @@ database, auth, API route, or worker yet; all data lives in the browser.
   schemas, Czech labels, shift validation), `calendar.ts` (UTC date helpers,
   Czech public holidays incl. Easter), `prefill.ts` (month/day prefill,
   status ranges).
+  `pdf.ts` builds the month PDF (pdfmake, A4 landscape, brand styling,
+  same colour meaning as the clinic's Word sheet); pdfmake + fonts load only
+  on click. pdfmake mutates cell objects during layout, so never share a cell
+  or row object between table positions.
 - `src/stores/attendance-store.ts` — zustand store persisted to
   `localStorage` (`mzdy:dochazka`), hydrated after mount
   (`skipHydration` + `rehydrate()` in the shell). Backups are JSON files

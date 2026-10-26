@@ -5,6 +5,7 @@ import {
   RiArrowRightSLine,
   RiCalendarCheckLine,
   RiDeleteBin6Line,
+  RiFilePdf2Line,
   RiMore2Line,
   RiRefreshLine,
   RiSuitcaseLine,
@@ -42,7 +43,9 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { addMonths, formatMonth, monthDays } from "@/lib/attendance/calendar";
+import { downloadAttendancePdf } from "@/lib/attendance/pdf";
 import {
   useAttendanceStore,
   useStoreHydrated,
@@ -62,6 +65,23 @@ export function MonthScreen({ month }: { month: string }) {
 
   const [absenceOpen, setAbsenceOpen] = useState(false);
   const [confirm, setConfirm] = useState<Confirm>(null);
+  const [exporting, setExporting] = useState(false);
+
+  async function exportPdf() {
+    const { months, employees: all } = useAttendanceStore.getState();
+    const sheet = months[month];
+    if (!sheet) return;
+    setExporting(true);
+    try {
+      await downloadAttendancePdf(month, sheet, all);
+    } catch (error) {
+      toast.error("PDF se nepodařilo vytvořit.", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const days = useMemo(() => monthDays(month), [month]);
   const workdays = days.filter((d) => !d.isWeekend && !d.holiday).length;
@@ -184,6 +204,9 @@ export function MonthScreen({ month }: { month: string }) {
             {monthNav}
             {hydrated && started ? (
               <>
+                <Button onClick={exportPdf} disabled={exporting}>
+                  {exporting ? <Spinner /> : <RiFilePdf2Line />} Stáhnout PDF
+                </Button>
                 <Button variant="outline" onClick={() => setAbsenceOpen(true)}>
                   <RiSuitcaseLine /> Zadat nepřítomnost
                 </Button>
