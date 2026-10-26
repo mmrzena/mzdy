@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { create } from "zustand";
-import { type PersistStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 
 import { type CalendarDay, monthDays } from "@/lib/attendance/calendar";
 import type {
@@ -17,48 +17,16 @@ import {
   type StatusRange,
   sortEntries,
 } from "@/lib/attendance/prefill";
+import { createDebouncedStorage, type SaveStatus } from "./persist-storage";
 
 export type EmployeeInput = Omit<Employee, "id">;
 
 type Persisted = Pick<AttendanceData, "employees" | "months">;
 
-/**
- * localStorage persistence that serializes at most once per `delayMs`.
- * Without it every keystroke re-stringifies the whole multi-year history.
- * A pending write is flushed when the page is hidden or unloaded, so nothing
- * typed is lost.
- */
-function debouncedLocalStorage(delayMs: number): PersistStorage<Persisted> {
-  let pending: (() => void) | null = null;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const flush = () => {
-    clearTimeout(timer);
-    pending?.();
-    pending = null;
-  };
-  if (typeof window !== "undefined") {
-    window.addEventListener("pagehide", flush);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") flush();
-    });
-  }
-  return {
-    getItem: (name) => {
-      const raw = localStorage.getItem(name);
-      return raw === null ? null : JSON.parse(raw);
-    },
-    setItem: (name, value) => {
-      pending = () => localStorage.setItem(name, JSON.stringify(value));
-      clearTimeout(timer);
-      timer = setTimeout(flush, delayMs);
-    },
-    removeItem: (name) => {
-      pending = null;
-      clearTimeout(timer);
-      localStorage.removeItem(name);
-    },
-  };
-}
+const persistence = createDebouncedStorage<Persisted>({
+  delayMs: 300,
+  savedMs: 2000,
+});
 
 type AttendanceState = AttendanceData & {
   addEmployee: (input: EmployeeInput) => void;
@@ -223,7 +191,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     }),
     {
       name: "mzdy:dochazka",
-      storage: debouncedLocalStorage(300),
+      storage: persistence.storage,
       partialize: (s) => ({ employees: s.employees, months: s.months }),
       // Hydrated after mount (rehydrate() in app/(app)/layout.tsx) so the
       // server render and the first client render agree.
@@ -231,6 +199,16 @@ export const useAttendanceStore = create<AttendanceState>()(
     },
   ),
 );
+
+/** What the browser storage is doing right now (saving / saved / error). */
+export function useSaveStatus(): SaveStatus {
+  return useSyncExternalStore(
+    persistence.subscribe,
+    persistence.getStatus,
+    () => SERVER_STATUS,
+  );
+}
+const SERVER_STATUS: SaveStatus = { state: "idle", savedAt: null };
 
 /** Whether saved data has been loaded from the browser yet. */
 export function useStoreHydrated() {

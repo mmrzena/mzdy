@@ -31,8 +31,10 @@ database, auth, API route, or worker yet; all data lives in the browser.
   or row object between table positions.
 - `src/stores/attendance-store.ts` — zustand store persisted to
   `localStorage` (`mzdy:dochazka`), hydrated after mount
-  (`skipHydration` + `rehydrate()` in the shell). Writes are debounced
-  (300 ms) and flushed on `pagehide` / hidden tab. Backups are JSON files
+  (`skipHydration` + `rehydrate()` in the shell). Writes go through
+  `src/stores/persist-storage.ts`: debounced (300 ms), flushed on `pagehide` /
+  hidden tab, and reporting idle / saving / saved / error, which the top-bar
+  `SaveStatus` shows (`useSaveStatus`). Backups are JSON files
   (`{ app: "mzdy", data }`).
 - `src/components/ui/` — shadcn primitives (add more with `npm run ui:add`).
 - `src/components/layout/` — `DashboardLayout`, `MainLayout`, `Header`,
