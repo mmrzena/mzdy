@@ -9,7 +9,7 @@ function Spinner({
   return (
     <RiLoader4Line
       role="status"
-      aria-label="Loading"
+      aria-label="Načítání"
       className={cn("size-4 animate-spin", className)}
       {...props}
     />

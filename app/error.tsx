@@ -29,7 +29,7 @@ export default function ErrorPage({
       <div className="flex w-full max-w-md flex-col items-center gap-8">
         <Link
           href="/"
-          aria-label="mzdy home"
+          aria-label="mzdy – úvodní stránka"
           className="flex items-center gap-2 font-semibold"
         >
           <RiHome4Line className="size-5 text-primary" /> mzdy
@@ -40,22 +40,23 @@ export default function ErrorPage({
             <EmptyMedia variant="icon">
               <RiErrorWarningLine />
             </EmptyMedia>
-            <EmptyTitle>Something went wrong</EmptyTitle>
+            <EmptyTitle>Něco se pokazilo</EmptyTitle>
             <EmptyDescription>
-              An unexpected error occurred. Try again, or head back home.
+              Došlo k neočekávané chybě. Zkuste to znovu, nebo se vraťte na
+              úvodní stránku.
               {error.digest ? (
                 <span className="mt-2 block font-mono text-xs text-muted-foreground">
-                  Error ID: {error.digest}
+                  ID chyby: {error.digest}
                 </span>
               ) : null}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <div className="flex gap-2">
-              <Button onClick={reset}>Try again</Button>
+              <Button onClick={reset}>Zkusit znovu</Button>
               <Button asChild variant="outline">
                 <Link href="/">
-                  <RiArrowLeftLine /> Back home
+                  <RiArrowLeftLine /> Zpět na úvod
                 </Link>
               </Button>
             </div>

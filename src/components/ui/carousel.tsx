@@ -195,7 +195,7 @@ function CarouselPrevious({
       {...props}
     >
       <RiArrowLeftLine />
-      <span className="sr-only">Previous slide</span>
+      <span className="sr-only">Předchozí snímek</span>
     </Button>
   );
 }
@@ -225,7 +225,7 @@ function CarouselNext({
       {...props}
     >
       <RiArrowRightLine />
-      <span className="sr-only">Next slide</span>
+      <span className="sr-only">Další snímek</span>
     </Button>
   );
 }

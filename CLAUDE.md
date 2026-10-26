@@ -28,6 +28,10 @@ is no database, auth, API route, or worker yet.
 
 ## Conventions
 
+- **The UI is in Czech.** Every user-facing string is Czech, including
+  screen-reader labels, toasts, page titles and exported documents. Format
+  dates, times and numbers with the `cs-CZ` locale (date picker uses the
+  `cs` locale from `react-day-picker`). Code, comments and docs stay English.
 - TypeScript strict, `@/*` → `src/*`.
 - Biome for lint + format (`npm run lint`, `npm run format`); kebab-case
   filenames.

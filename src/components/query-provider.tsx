@@ -29,7 +29,7 @@ function showErrorToast(error: Error, meta: QueryErrorMeta | undefined) {
   if (meta?.skipErrorToast) {
     return;
   }
-  toast.error(meta?.errorMessage ?? "Something went wrong", {
+  toast.error(meta?.errorMessage ?? "Něco se pokazilo", {
     description: error.message,
   });
 }

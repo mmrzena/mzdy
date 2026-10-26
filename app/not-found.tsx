@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/empty";
 
 export const metadata: Metadata = {
-  title: "Page not found",
+  title: "Stránka nenalezena",
 };
 
 export default function NotFound() {
@@ -22,7 +22,7 @@ export default function NotFound() {
       <div className="flex w-full max-w-md flex-col items-center gap-8">
         <Link
           href="/"
-          aria-label="mzdy home"
+          aria-label="mzdy – úvodní stránka"
           className="flex items-center gap-2 font-semibold"
         >
           <RiHome4Line className="size-5 text-primary" /> mzdy
@@ -36,15 +36,15 @@ export default function NotFound() {
             <p className="text-sm font-semibold tracking-widest text-primary">
               404
             </p>
-            <EmptyTitle>Page not found</EmptyTitle>
+            <EmptyTitle>Stránka nenalezena</EmptyTitle>
             <EmptyDescription>
-              The page you’re looking for doesn’t exist or may have moved.
+              Hledaná stránka neexistuje nebo byla přesunuta.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
               <Link href="/">
-                <RiArrowLeftLine /> Back home
+                <RiArrowLeftLine /> Zpět na úvod
               </Link>
             </Button>
           </EmptyContent>

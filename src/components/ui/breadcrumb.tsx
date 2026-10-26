@@ -5,7 +5,9 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
-  return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
+  return (
+    <nav aria-label="drobečková navigace" data-slot="breadcrumb" {...props} />
+  );
 }
 
 function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
@@ -93,7 +95,7 @@ function BreadcrumbEllipsis({
       {...props}
     >
       <RiMoreLine className="size-4" />
-      <span className="sr-only">More</span>
+      <span className="sr-only">Více</span>
     </span>
   );
 }

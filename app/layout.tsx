@@ -22,7 +22,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "mzdy",
-  description: "Administration tool for an outpatient clinic.",
+  description: "Administrativa ambulance.",
 };
 
 export default function RootLayout({
@@ -32,7 +32,7 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="en"
+      lang="cs"
       suppressHydrationWarning
       className={`${inter.variable} ${plexMono.variable}`}
     >
