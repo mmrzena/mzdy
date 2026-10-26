@@ -6,6 +6,8 @@ import type {
   TDocumentDefinitions,
 } from "pdfmake/interfaces";
 
+import { CLINIC } from "@/lib/clinic";
+
 import {
   type CalendarDay,
   countWorkdays,
@@ -51,6 +53,7 @@ const C = {
   rule: "#e3e8f0",
   ruleStrong: "#c9d2e0",
   red: "#f43f5e",
+  teal: "#14b8a6",
   redDark: "#be123c",
   absentFill: "#fdecef",
   absentSwatch: "#f8b4c1",
@@ -79,7 +82,7 @@ function statusText(status: Entry["status"]) {
 }
 
 const MARGIN_X = 36;
-const HEADER_HEIGHT = 96;
+const HEADER_HEIGHT = 112;
 /** day | name | od | do | pause | status */
 const WIDTHS: (number | string)[] = [60, "*", 34, 34, 70, 72];
 
@@ -372,24 +375,59 @@ function pageKind(
   return "days";
 }
 
+/** The clinic's wordmark from kardiologie-brandys.cz, set in type. */
+function clinicWordmark(): Column {
+  return {
+    width: "*",
+    stack: [
+      {
+        text: CLINIC.department.toUpperCase(),
+        fontSize: 7,
+        bold: true,
+        color: C.teal,
+        characterSpacing: 1.8,
+      },
+      {
+        text: CLINIC.place.toUpperCase(),
+        fontSize: 13,
+        bold: true,
+        color: C.navy,
+        characterSpacing: 1.6,
+        margin: [0, 1, 0, 1],
+      },
+      {
+        text: CLINIC.company,
+        fontSize: 7,
+        bold: true,
+        color: C.slate,
+        characterSpacing: 0.5,
+      },
+    ],
+  };
+}
+
 function titleBlock(month: string, people: number, workdays: number): Content {
   return {
-    margin: [0, 8, 0, 14],
+    margin: [0, 10, 0, 16],
     columns: [
-      {
-        width: "*",
-        text: [
-          { text: "Docházka  ", fontSize: 18, bold: true, color: C.navy },
-          { text: formatMonth(month), fontSize: 18, color: C.red },
-        ],
-      },
+      clinicWordmark(),
       {
         width: "auto",
         alignment: "right",
-        margin: [0, 6, 0, 0],
-        fontSize: 8.5,
-        color: C.slate,
-        text: `${plural(people, "zaměstnanec", "zaměstnanci", "zaměstnanců")}  ·  ${plural(workdays, "pracovní den", "pracovní dny", "pracovních dnů")}`,
+        stack: [
+          {
+            text: [
+              { text: "Docházka  ", fontSize: 18, bold: true, color: C.navy },
+              { text: formatMonth(month), fontSize: 18, color: C.red },
+            ],
+          },
+          {
+            margin: [0, 3, 0, 0],
+            fontSize: 8.5,
+            color: C.slate,
+            text: `${plural(people, "zaměstnanec", "zaměstnanci", "zaměstnanců")}  ·  ${plural(workdays, "pracovní den", "pracovní dny", "pracovních dnů")}`,
+          },
+        ],
       },
     ],
   };
@@ -397,7 +435,7 @@ function titleBlock(month: string, people: number, workdays: number): Content {
 
 function continuationBlock(month: string, label: string): Content {
   return {
-    margin: [0, 8, 0, 21],
+    margin: [0, 8, 0, 37],
     columns: [
       {
         text: `Docházka – ${formatMonth(month)}`,
@@ -405,7 +443,20 @@ function continuationBlock(month: string, label: string): Content {
         bold: true,
         color: C.navy,
       },
-      { text: label, alignment: "right", fontSize: 8, color: C.muted },
+      {
+        width: "auto",
+        alignment: "right",
+        fontSize: 8,
+        text: [
+          {
+            text: `${CLINIC.department} ${CLINIC.place}`.toUpperCase(),
+            bold: true,
+            color: C.slate,
+            characterSpacing: 0.8,
+          },
+          { text: `   ·   ${label}`, color: C.muted },
+        ],
+      },
     ],
   };
 }
@@ -445,7 +496,11 @@ export function attendancePdf(
     pageSize: "A4",
     pageOrientation: "portrait",
     pageMargins: [MARGIN_X, HEADER_HEIGHT, MARGIN_X, 44],
-    info: { title, subject: "Docházka zaměstnanců" },
+    info: {
+      title,
+      subject: `Docházka zaměstnanců – ${CLINIC.department} ${CLINIC.place}`,
+      author: CLINIC.company,
+    },
     defaultStyle: {
       font: "Roboto",
       fontSize: 8.5,

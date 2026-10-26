@@ -116,3 +116,23 @@ test("ends with an hours summary page", () => {
   assert.equal(body.length, 5);
   assert.equal(plain(body.at(-1)?.[0] ?? {}), "Celkem");
 });
+
+test("pages carry the clinic's name", () => {
+  const { doc } = build();
+  const header = doc.header as (
+    page: number,
+    count: number,
+    size: { width: number; height: number },
+  ) => unknown;
+  const size = { width: 595, height: 842 };
+  assert.match(JSON.stringify(header(1, 3, size)), /BRANDÝS NAD LABEM/);
+  assert.match(
+    JSON.stringify(header(1, 3, size)),
+    /MEDICUS SERVICES s\.r\.o\./,
+  );
+  assert.match(
+    JSON.stringify(header(2, 3, size)),
+    /KARDIOLOGIE BRANDÝS NAD LABEM/,
+  );
+  assert.equal(doc.info?.author, "MEDICUS SERVICES s.r.o.");
+});

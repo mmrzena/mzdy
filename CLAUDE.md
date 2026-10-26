@@ -43,6 +43,8 @@ database, auth, API route, or worker yet; all data lives in the browser.
   `localStorage` under `mzdy:theme`.
 - `src/hooks/` — `useIsMobile`, `useIsDesktop`.
 - `src/lib/utils.ts` — `cn()` and small helpers.
+- `src/lib/clinic.ts` — the clinic's name and company (Kardiologie Brandýs
+  nad Labem, MEDICUS SERVICES s.r.o.); the PDF sets its wordmark from it.
 - `src/styles/theme.css` — Tailwind v4 CSS-first theme tokens; imported from
   `app/globals.css`.
 - `.claude/skills/` — shared skills for adding UI components, charts, state
