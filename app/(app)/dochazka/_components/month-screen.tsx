@@ -236,7 +236,7 @@ export function MonthScreen({ month }: { month: string }) {
     <>
       <PageHeader
         title="Docházka"
-        description={`${plural(workdays, "pracovní den", "pracovní dny", "pracovních dnů")}${holidays ? `, ${plural(holidays, "svátek", "svátky", "svátků")} ve všední den` : ""}. Změny se ukládají automaticky.`}
+        description={`${plural(workdays, "pracovní den", "pracovní dny", "pracovních dnů")}${holidays ? `, ${plural(holidays, "svátek", "svátky", "svátků")} ve všední den` : ""}.`}
         actions={
           <>
             {monthNav}
