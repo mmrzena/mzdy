@@ -80,7 +80,7 @@ export function DashboardLayout({
     >
       <Sidebar collapsible="icon">
         {brand ? (
-          <SidebarHeader className="overflow-hidden px-4 py-3 text-base font-semibold whitespace-nowrap group-data-[collapsible=icon]:px-2">
+          <SidebarHeader className="overflow-hidden px-3 py-3 whitespace-nowrap group-data-[collapsible=icon]:px-2">
             {brand}
           </SidebarHeader>
         ) : null}

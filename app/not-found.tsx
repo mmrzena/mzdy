@@ -1,6 +1,8 @@
-import { RiArrowLeftLine, RiCompass3Line, RiHome4Line } from "@remixicon/react";
+import { RiArrowLeftLine, RiCompass3Line } from "@remixicon/react";
 import type { Metadata } from "next";
 import Link from "next/link";
+
+import { Logo } from "@/components/app/logo";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,12 +22,8 @@ export default function NotFound() {
   return (
     <main className="grid min-h-svh place-items-center bg-muted/40 p-4">
       <div className="flex w-full max-w-md flex-col items-center gap-8">
-        <Link
-          href="/"
-          aria-label="mzdy – úvodní stránka"
-          className="flex items-center gap-2 font-semibold"
-        >
-          <RiHome4Line className="size-5 text-primary" /> mzdy
+        <Link href="/" aria-label="mzdy – úvodní stránka">
+          <Logo />
         </Link>
 
         <Empty className="border-0 bg-transparent">

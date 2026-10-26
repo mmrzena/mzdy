@@ -203,7 +203,7 @@ export function MonthScreen({ month }: { month: string }) {
           <>
             {monthNav}
             {hydrated && started ? (
-              <>
+              <div className="flex items-center gap-2">
                 <Button onClick={exportPdf} disabled={exporting}>
                   {exporting ? <Spinner /> : <RiFilePdf2Line />} Stáhnout PDF
                 </Button>
@@ -232,7 +232,7 @@ export function MonthScreen({ month }: { month: string }) {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </>
+              </div>
             ) : null}
           </>
         }

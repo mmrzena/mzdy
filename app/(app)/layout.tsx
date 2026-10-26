@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { BackupMenu } from "@/components/app/backup-menu";
+import { Logo } from "@/components/app/logo";
 import { SaveStatus } from "@/components/app/save-status";
+import { ThemeToggle } from "@/components/app/theme-toggle";
 import { DashboardLayout } from "@/components/layout";
 import { useAttendanceStore } from "@/stores/attendance-store";
 
@@ -21,14 +23,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <DashboardLayout
       brand={
-        <Link href="/dochazka" className="text-brand-navy dark:text-foreground">
-          mzdy
+        <Link href="/dochazka" aria-label="mzdy – docházka">
+          <Logo />
         </Link>
       }
       topBarActions={
         <>
           <SaveStatus />
           <BackupMenu />
+          <ThemeToggle />
         </>
       }
       navGroups={[

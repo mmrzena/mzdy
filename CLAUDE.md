@@ -34,6 +34,9 @@ database, auth, API route, or worker yet; all data lives in the browser.
 - `src/components/layout/` — `DashboardLayout`, `MainLayout`, `Header`,
   `Footer`, `PageHeader`.
 - `src/components/{theme,query}-provider.tsx` — app-wide providers.
+  Light/dark: next-themes (class strategy, follows the system until the user
+  picks), toggle in `src/components/app/theme-toggle.tsx`, saved in
+  `localStorage` under `mzdy:theme`.
 - `src/hooks/` — `useIsMobile`, `useIsDesktop`.
 - `src/lib/utils.ts` — `cn()` and small helpers.
 - `src/styles/theme.css` — Tailwind v4 CSS-first theme tokens; imported from
