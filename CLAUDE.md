@@ -33,7 +33,7 @@ database, auth, API route, or worker yet; all data lives in the browser.
   `localStorage` (`mzdy:dochazka`), hydrated after mount
   (`skipHydration` + `rehydrate()` in the shell). Writes are debounced
   (300 ms) and flushed on `pagehide` / hidden tab. Backups are JSON files
-  (`{ app: "mzdy", version: 1, data }`).
+  (`{ app: "mzdy", data }`).
 - `src/components/ui/` — shadcn primitives (add more with `npm run ui:add`).
 - `src/components/layout/` — `DashboardLayout`, `MainLayout`, `Header`,
   `Footer`, `PageHeader`.
@@ -61,8 +61,7 @@ database, auth, API route, or worker yet; all data lives in the browser.
   `npm run build`.
 - Statuses: `pritomen`, the clinic's absence reasons (`ABSENCE_STATUSES`:
   dovolená, neplacené volno, pracovní cesta, pracovní neschopnost (PN), OČR, překážky na straně
-  zaměstnavatele) and `svatek`. Old values are mapped by `migrateStatus`
-  (zod preprocess + persist v2 migration); keep that map when renaming.
+  zaměstnavatele) and `svatek`.
 - Contract colours (HPP navy, DPČ blue, DPP grey) are theme tokens
   `--contract-*` used by `ContractBadge`; the PDF mirrors them.
 - Shared helpers live in `src/lib/attendance/calendar.ts` (`plural`,

@@ -22,7 +22,6 @@ import { useAttendanceStore } from "@/stores/attendance-store";
 
 const backupSchema = z.object({
   app: z.literal("mzdy"),
-  version: z.literal(1),
   exportedAt: z.string().optional(),
   data: attendanceDataSchema,
 });
@@ -36,7 +35,6 @@ export function BackupMenu() {
     const { employees, months } = useAttendanceStore.getState();
     const backup: Backup = {
       app: "mzdy",
-      version: 1,
       exportedAt: new Date().toISOString(),
       data: { employees, months },
     };

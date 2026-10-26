@@ -52,18 +52,7 @@ export const ABSENCE_STATUSES = [
 export const STATUSES = ["pritomen", ...ABSENCE_STATUSES, "svatek"] as const;
 export type Status = (typeof STATUSES)[number];
 
-/** Retired status values and what they read as now (saves, backups). */
-const LEGACY_STATUS: Record<string, Status> = {
-  nemoc: "pn",
-  lekar: "pn",
-  pn_ocr: "pn",
-};
-
-export function migrateStatus(value: unknown): unknown {
-  return typeof value === "string" ? (LEGACY_STATUS[value] ?? value) : value;
-}
-
-export const statusSchema = z.preprocess(migrateStatus, z.enum(STATUSES));
+export const statusSchema = z.enum(STATUSES);
 
 export const STATUS_LABEL: Record<Status, string> = {
   pritomen: "Přítomen",
