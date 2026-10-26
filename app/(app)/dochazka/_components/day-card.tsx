@@ -141,7 +141,7 @@ export const DayCard = memo(function DayCard({
 
       {isEmpty ? null : (
         <div className="overflow-x-auto px-4">
-          <div className="grid min-w-[51rem] gap-2">
+          <div className="grid min-w-[52.5rem] gap-2">
             <div
               className={cn(ROW_GRID, "text-xs text-muted-foreground")}
               aria-hidden="true"

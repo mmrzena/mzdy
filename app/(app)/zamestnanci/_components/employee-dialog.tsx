@@ -7,6 +7,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { BreakInput } from "@/components/app/break-input";
 import { TimeInput } from "@/components/app/time-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -282,31 +283,21 @@ function EmployeeForm({
                           )}
                         />
                       ))}
-                      <div className="col-span-3 flex items-center gap-1 sm:col-span-1">
-                        <Controller
-                          control={form.control}
-                          name={`week.${i}.breakStart`}
-                          render={({ field }) => (
-                            <TimeInput
-                              value={field.value}
-                              onChange={field.onChange}
-                              disabled={!works}
-                              aria-label={`${dayName} pauza od`}
-                            />
-                          )}
-                        />
-                        <span className="text-muted-foreground">–</span>
-                        <Controller
-                          control={form.control}
-                          name={`week.${i}.breakEnd`}
-                          render={({ field }) => (
-                            <TimeInput
-                              value={field.value}
-                              onChange={field.onChange}
-                              disabled={!works}
-                              aria-label={`${dayName} pauza do`}
-                            />
-                          )}
+                      <div className="col-span-3 sm:col-span-1">
+                        <BreakInput
+                          breakStart={week?.[i]?.breakStart ?? null}
+                          breakEnd={week?.[i]?.breakEnd ?? null}
+                          onChange={(breakStart, breakEnd) => {
+                            const opts = { shouldDirty: true };
+                            form.setValue(
+                              `week.${i}.breakStart`,
+                              breakStart,
+                              opts,
+                            );
+                            form.setValue(`week.${i}.breakEnd`, breakEnd, opts);
+                          }}
+                          disabled={!works}
+                          label={dayName}
                         />
                       </div>
                     </div>
@@ -320,7 +311,7 @@ function EmployeeForm({
               })}
             </div>
             <p className="text-xs text-muted-foreground">
-              Pauzu nechte prázdnou, pokud ji daný den nemá. Dohody (DPP, DPČ)
+              Den bez obědové pauzy nastavíte křížkem u pauzy. Dohody (DPP, DPČ)
               bez pravidelných dnů nechte bez rozvrhu a do docházky je
               přidávejte ručně.
             </p>

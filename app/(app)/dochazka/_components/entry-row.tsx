@@ -3,6 +3,7 @@
 import { RiCloseLine } from "@remixicon/react";
 import { memo } from "react";
 
+import { BreakInput } from "@/components/app/break-input";
 import { ContractBadge } from "@/components/app/contract-badge";
 import { TimeInput } from "@/components/app/time-input";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
 
 export const ROW_GRID =
-  "grid grid-cols-[minmax(10rem,1fr)_6.5rem_6.5rem_14rem_9.5rem_2rem] items-center gap-2";
+  "grid grid-cols-[minmax(10rem,1fr)_6.5rem_6.5rem_15.5rem_9.5rem_2rem] items-center gap-2";
 
 export const EntryRow = memo(function EntryRow({
   month,
@@ -75,21 +76,13 @@ export const EntryRow = memo(function EntryRow({
           invalid={Boolean(issue)}
           aria-label={`${name} do`}
         />
-        <div className="flex items-center gap-1">
-          <TimeInput
-            value={entry.breakStart}
-            onChange={(breakStart) => update({ breakStart })}
-            disabled={!present}
-            aria-label={`${name} pauza od`}
-          />
-          <span className="text-muted-foreground">–</span>
-          <TimeInput
-            value={entry.breakEnd}
-            onChange={(breakEnd) => update({ breakEnd })}
-            disabled={!present}
-            aria-label={`${name} pauza do`}
-          />
-        </div>
+        <BreakInput
+          breakStart={entry.breakStart}
+          breakEnd={entry.breakEnd}
+          onChange={(breakStart, breakEnd) => update({ breakStart, breakEnd })}
+          disabled={!present}
+          label={name}
+        />
         <NativeSelect
           size="sm"
           value={entry.status}
