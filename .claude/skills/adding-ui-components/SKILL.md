@@ -6,7 +6,7 @@ description: Add or use UI components in this repo the right way — pull from t
 # Adding UI components in this starter kit
 
 This repo already vendors **56 shadcn/ui components** (new-york style) in
-`src/components/ui/`, pre-themed with the ShipMonk palette. Compose from them —
+`src/components/ui/`, pre-themed with the brand palette. Compose from them —
 do not hand-write buttons, dialogs, inputs, tables, etc.
 
 ## Workflow

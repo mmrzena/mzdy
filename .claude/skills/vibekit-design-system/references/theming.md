@@ -17,7 +17,7 @@ hex.
 | `--background` / `--foreground` | `bg-background`, `text-foreground` | page surface + body text |
 | `--card` / `--card-foreground` | `bg-card`, `text-card-foreground` | card surfaces |
 | `--popover` / `--popover-foreground` | `bg-popover`, … | floating panels |
-| `--primary` / `--primary-foreground` | `bg-primary`, `text-primary`, `text-primary-foreground` | primary actions, brand accents (SM-Teal) |
+| `--primary` / `--primary-foreground` | `bg-primary`, `text-primary`, `text-primary-foreground` | primary actions, brand accents (brand red) |
 | `--secondary` / `--secondary-foreground` | `bg-secondary`, … | secondary buttons/badges |
 | `--muted` / `--muted-foreground` | `bg-muted`, `text-muted-foreground` | subtle fills, descriptions, helper text |
 | `--accent` / `--accent-foreground` | `bg-accent`, `hover:bg-accent/40` | hover/active surfaces |
@@ -31,26 +31,36 @@ hex.
 Opacity modifiers are idiomatic: `bg-primary/10`, `bg-muted/40`,
 `hover:bg-accent/40`, `outline-ring/50`.
 
-`--radius` is `0.625rem`; `rounded-sm/md/lg/xl` derive from it via `@theme`. Use
+`--radius` is `0.75rem`; `rounded-sm/md/lg/xl` derive from it via `@theme`. Use
 the `rounded-*` utilities, not a raw radius.
 
-## Material color scales (when tokens aren't enough)
+## Brand colors (when tokens aren't enough)
 
-24 families, each `50`-`900`, exposed as utilities like `bg-SM-Teal-500`,
-`text-blueGrey-600`, `border-blue-200`. Reach for these only when a semantic
-token can't express the need - a fixed categorical color (tags, a legend), or a
-specific tint/shade. Default to semantic tokens so dark mode keeps working;
-scales are fixed values and do **not** flip with the theme.
+The same palette as the sibling sites kardiologie-brandys and srdce-sportovce,
+exposed as utilities with the same names so markup can be ported across:
 
-Families: `blueGrey`, `grey`, `SM-Teal` (brand teal - 500 = `#5fae9f`), `blue`,
-`lightBlue`, `indigo`, `deepPurple`, `purple`, `pink`, `red`, `deepOrange`,
-`orange`, `amber`, `yellow`, `lime`, `lightGreen`, `green`, `cyan`. Convention:
-`50` lightest → `900` darkest; camelCase family names (`blueGrey`, `lightBlue`,
-`deepPurple`, `SM-Teal`).
+| Utility suffix | Hex | Role on the sibling sites |
+| --- | --- | --- |
+| `brand-red` | `#f43f5e` | CTAs, highlights (`hover:bg-brand-red-dark`) |
+| `brand-red-dark` | `#be123c` | CTA hover |
+| `brand-blue` | `#0f4c81` | secondary accent, gradients |
+| `brand-blue-dark` | `#0a2f4f` | gradient end |
+| `brand-navy` | `#071125` | headings |
+| `brand-navy-soft` | `#0f1f3d` | dark surfaces |
+| `brand-slate` | `#4c5f7a` | secondary text |
+| `brand-teal` | `#14b8a6` | accent text, borders, gradients |
+| `brand-aqua` | `#22d3ee` | accent, page wash |
+| `brand-gray` | `#f4f6fb` | page bg, soft borders |
+| `brand-sand` | `#f9fafb` | alt light surface |
+
+Use them as `bg-brand-red`, `text-brand-navy`, `border-brand-gray`,
+`from-brand-teal to-brand-aqua`, etc. Reach for these only when a semantic token
+can't express the need. They are fixed values and do **not** flip with the
+theme, so prefer semantic tokens in app chrome.
 
 ## Typography
 
-Open Sans is bound to `--font-sans` (loaded by `next/font/google` in
+Inter is bound to `--font-sans` (loaded by `next/font/google` in
 `app/layout.tsx`) and applied to `body` in the base layer - no per-component font
 classes needed. Build hierarchy with Tailwind's default scale:
 

@@ -1,6 +1,6 @@
 ---
 name: building-charts
-description: Build data-viz / charts in this repo using recharts wrapped in the shadcn ChartContainer, with ShipMonk theme colors via CSS variables. Use when adding a chart, graph, trend line, bar/area/line/pie/donut, KPI sparkline, or any data visualization.
+description: Build data-viz / charts in this repo using recharts wrapped in the shadcn ChartContainer, with brand theme colors via CSS variables. Use when adding a chart, graph, trend line, bar/area/line/pie/donut, KPI sparkline, or any data visualization.
 ---
 
 # Building charts in this starter kit
@@ -18,7 +18,7 @@ tooltips, and legends consistent with the rest of the UI.
    pattern instead when adding new charts.)
 
 2. **Colors come from CSS variables, never hex.** Use `var(--color-primary)`,
-   `var(--color-chart-2)`, … so charts track the ShipMonk light/dark theme.
+   `var(--color-chart-2)`, … so charts track the brand light/dark theme.
 
 3. **A chart is a client component.** recharts needs the browser. Put it in the
    route's `_components/` folder with `"use client"` at the top and import it

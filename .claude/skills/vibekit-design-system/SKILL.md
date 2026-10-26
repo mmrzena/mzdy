@@ -1,6 +1,6 @@
 ---
 name: vibekit-design-system
-description: Design and compose on-theme UI in this repo - pick the right shadcn/ui component for a need, choose a layout (MainLayout vs DashboardLayout), assemble page patterns (KPI grids, data tables, dialog/sheet forms, tabs, empty states), and apply the ShipMonk theme tokens consistently. Use when asked to "design a page", "build a screen/dashboard", "which component should I use", "lay out a page", "make the UI look good", or "improve the design".
+description: Design and compose on-theme UI in this repo - pick the right shadcn/ui component for a need, choose a layout (MainLayout vs DashboardLayout), assemble page patterns (KPI grids, data tables, dialog/sheet forms, tabs, empty states), and apply the brand theme tokens consistently. Use when asked to "design a page", "build a screen/dashboard", "which component should I use", "lay out a page", "make the UI look good", or "improve the design".
 ---
 
 # Designing UI in this starter kit
@@ -94,9 +94,10 @@ Detail in **`references/theming.md`**. The essentials:
   `bg-background`/`text-foreground`, `bg-primary text-primary-foreground`,
   `bg-card`, `bg-muted text-muted-foreground`, `border`, `text-destructive`,
   `text-success`, `bg-accent`. These flip correctly in dark mode.
-- **Reach for the Material scales** (`bg-SM-Teal-500`, `text-blueGrey-600`,
-  `border-blue-200`, …) only when a semantic token can't express it - e.g. a
-  fixed categorical color. Default to tokens.
+- **Reach for the brand colors** (`bg-brand-red`, `text-brand-navy`,
+  `text-brand-teal`, `border-brand-gray`, …) only when a semantic token can't
+  express it - e.g. a fixed categorical color or a marketing hero. Default to
+  tokens.
 - **Never raw hex** in markup. **Never** dark-mode-specific colors by hand - use
   tokens so both modes work.
 - Standard accent block: `inline-flex size-9 items-center justify-center
