@@ -3,15 +3,14 @@
 import { RiCloseLine } from "@remixicon/react";
 import { memo } from "react";
 
+import { ContractBadge } from "@/components/app/contract-badge";
 import { TimeInput } from "@/components/app/time-input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import {
-  CONTRACT_LABEL,
   type Employee,
   type Entry,
   STATUS_LABEL,
@@ -56,13 +55,7 @@ export const EntryRow = memo(function EntryRow({
             {name}
           </span>
           {employee && employee.contract !== "HPP" ? (
-            <Badge
-              variant="outline"
-              className="shrink-0"
-              title={CONTRACT_LABEL[employee.contract].long}
-            >
-              {CONTRACT_LABEL[employee.contract].short}
-            </Badge>
+            <ContractBadge contract={employee.contract} className="shrink-0" />
           ) : null}
         </div>
         <TimeInput

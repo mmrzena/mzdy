@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import { formatShortDate, monthDays } from "@/lib/attendance/calendar";
+import { type CalendarDay, formatShortDate } from "@/lib/attendance/calendar";
 import {
   ABSENCE_STATUSES,
   type Employee,
@@ -27,19 +27,38 @@ import {
 } from "@/lib/attendance/model";
 import { useAttendanceStore } from "@/stores/attendance-store";
 
-/** Mark one person's vacation / sickness over a date range in one go. */
-export function AbsenceDialog({
-  month,
-  employees,
-  open,
-  onOpenChange,
-}: {
+type AbsenceDialogProps = {
   month: string;
+  days: CalendarDay[];
   employees: Employee[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+};
+
+/** Mark one person's vacation / sickness over a date range in one go. */
+export function AbsenceDialog({
+  open,
+  onOpenChange,
+  ...formProps
+}: AbsenceDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <AbsenceForm {...formProps} onDone={() => onOpenChange(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Mounted fresh on every open, so it always starts from a blank selection. */
+function AbsenceForm({
+  month,
+  days,
+  employees,
+  onDone,
+}: Omit<AbsenceDialogProps, "open" | "onOpenChange"> & {
+  onDone: () => void;
 }) {
-  const days = monthDays(month);
   const first = days[0].date;
   const last = days[days.length - 1].date;
 
@@ -48,108 +67,97 @@ export function AbsenceDialog({
   const [from, setFrom] = useState(first);
   const [to, setTo] = useState(first);
 
-  useEffect(() => {
-    if (open) {
-      setEmployeeId("");
-      setStatus("dovolena");
-      setFrom(first);
-      setTo(first);
-    }
-  }, [open, first]);
-
   const valid = employeeId !== "" && from <= to && from >= first && to <= last;
 
   function apply() {
     if (!valid) return;
     useAttendanceStore
       .getState()
-      .applyStatusRange(month, employeeId, from, to, status);
+      .applyStatusRange(month, { employeeId, from, to, status });
     const name = employees.find((e) => e.id === employeeId)?.name;
     toast.success(
       `${name}: ${STATUS_LABEL[status].toLowerCase()} ${formatShortDate(from)}–${formatShortDate(to)} zapsána.`,
     );
-    onOpenChange(false);
+    onDone();
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Zadat nepřítomnost</DialogTitle>
-          <DialogDescription>
-            Nastaví stav na všechny dny v rozsahu, kdy zaměstnanec pracuje.
-            Víkendy mimo jeho rozvrh a svátky zůstanou beze změny.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4">
+    <>
+      <DialogHeader>
+        <DialogTitle>Zadat nepřítomnost</DialogTitle>
+        <DialogDescription>
+          Nastaví stav na všechny dny v rozsahu, kdy zaměstnanec pracuje.
+          Víkendy mimo jeho rozvrh a svátky zůstanou beze změny.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="absence-employee">Zaměstnanec</Label>
+          <NativeSelect
+            id="absence-employee"
+            value={employeeId}
+            className="w-full"
+            onChange={(e) => setEmployeeId(e.target.value)}
+          >
+            <NativeSelectOption value="">Vyberte…</NativeSelectOption>
+            {employees.map((e) => (
+              <NativeSelectOption key={e.id} value={e.id}>
+                {e.name}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="absence-status">Důvod</Label>
+          <NativeSelect
+            id="absence-status"
+            value={status}
+            className="w-full"
+            onChange={(e) => setStatus(e.target.value as Status)}
+          >
+            {ABSENCE_STATUSES.map((s) => (
+              <NativeSelectOption key={s} value={s}>
+                {STATUS_LABEL[s]}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="absence-employee">Zaměstnanec</Label>
-            <NativeSelect
-              id="absence-employee"
-              value={employeeId}
-              className="w-full"
-              onChange={(e) => setEmployeeId(e.target.value)}
-            >
-              <NativeSelectOption value="">Vyberte…</NativeSelectOption>
-              {employees.map((e) => (
-                <NativeSelectOption key={e.id} value={e.id}>
-                  {e.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+            <Label htmlFor="absence-from">Od</Label>
+            <Input
+              id="absence-from"
+              type="date"
+              min={first}
+              max={last}
+              value={from}
+              onChange={(e) => {
+                setFrom(e.target.value);
+                if (e.target.value > to) setTo(e.target.value);
+              }}
+            />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="absence-status">Důvod</Label>
-            <NativeSelect
-              id="absence-status"
-              value={status}
-              className="w-full"
-              onChange={(e) => setStatus(e.target.value as Status)}
-            >
-              {ABSENCE_STATUSES.map((s) => (
-                <NativeSelectOption key={s} value={s}>
-                  {STATUS_LABEL[s]}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="absence-from">Od</Label>
-              <Input
-                id="absence-from"
-                type="date"
-                min={first}
-                max={last}
-                value={from}
-                onChange={(e) => {
-                  setFrom(e.target.value);
-                  if (e.target.value > to) setTo(e.target.value);
-                }}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="absence-to">Do</Label>
-              <Input
-                id="absence-to"
-                type="date"
-                min={from}
-                max={last}
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-              />
-            </div>
+            <Label htmlFor="absence-to">Do</Label>
+            <Input
+              id="absence-to"
+              type="date"
+              min={from}
+              max={last}
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Zrušit
-          </Button>
-          <Button disabled={!valid} onClick={apply}>
-            Zapsat
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onDone}>
+          Zrušit
+        </Button>
+        <Button disabled={!valid} onClick={apply}>
+          Zapsat
+        </Button>
+      </DialogFooter>
+    </>
   );
 }

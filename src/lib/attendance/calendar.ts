@@ -47,17 +47,38 @@ export function toMonthKey(year: number, month: number) {
   return `${year}-${pad(month)}`;
 }
 
+const MONTH_KEY = /^(\d{4})-(0[1-9]|1[0-2])$/;
+
+export function isMonthKey(key: string) {
+  return MONTH_KEY.test(key);
+}
+
 export function parseMonthKey(key: string) {
-  const match = /^(\d{4})-(\d{2})$/.exec(key);
+  const match = MONTH_KEY.exec(key);
   if (!match) {
     throw new Error(`Invalid month key: ${key}`);
   }
   return { year: Number(match[1]), month: Number(match[2]) };
 }
 
-export function isMonthKey(key: string) {
-  const match = /^(\d{4})-(\d{2})$/.exec(key);
-  return match !== null && Number(match[2]) >= 1 && Number(match[2]) <= 12;
+/** Local calendar date of `date` as ISO "2026-10-26". */
+export function toIsoDate(date: Date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** "26. 10. 2026" */
+export function formatDate(date: Date) {
+  return `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()}`;
+}
+
+/**
+ * Czech noun agreement: 1 → `one`, 2–4 → `few`, otherwise `many`.
+ * plural(3, "osoba", "osoby", "osob") → "3 osoby"
+ */
+export function plural(n: number, one: string, few: string, many: string) {
+  if (n === 1) return `${n} ${one}`;
+  if (n >= 2 && n <= 4) return `${n} ${few}`;
+  return `${n} ${many}`;
 }
 
 export function currentMonthKey(now = new Date()) {
@@ -149,4 +170,14 @@ export function monthDays(key: string): CalendarDay[] {
 export function formatShortDate(iso: string) {
   const [, month, day] = iso.split("-").map(Number);
   return `${day}. ${month}.`;
+}
+
+/** Weekdays that are not public holidays. */
+export function countWorkdays(days: CalendarDay[]) {
+  return days.filter((d) => !d.isWeekend && !d.holiday).length;
+}
+
+/** The same weekday a week earlier, or null when that falls in another month. */
+export function weekAgoInMonth(day: CalendarDay, days: CalendarDay[]) {
+  return days.find((d) => d.day === day.day - 7)?.date ?? null;
 }

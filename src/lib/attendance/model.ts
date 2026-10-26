@@ -98,6 +98,21 @@ export const CLINIC_WEEK: WeekTemplate = [
   null,
 ];
 
+/**
+ * For a weekday without a usual shift: the clinic's hours that day, else 8–16.
+ * The break is included because Czech labour law requires one after 6 hours.
+ */
+export function fallbackShift(weekdayIndex: number): Shift {
+  return (
+    CLINIC_WEEK[weekdayIndex] ?? {
+      start: "08:00",
+      end: "16:00",
+      breakStart: "12:00",
+      breakEnd: "12:30",
+    }
+  );
+}
+
 export const EMPTY_WEEK: WeekTemplate = [
   null,
   null,

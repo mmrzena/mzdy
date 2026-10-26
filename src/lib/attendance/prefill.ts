@@ -1,6 +1,12 @@
 import type { CalendarDay } from "./calendar";
-import type { Employee, Entry, MonthSheet, Shift, Status } from "./model";
-import { CLINIC_WEEK } from "./model";
+import {
+  type Employee,
+  type Entry,
+  fallbackShift,
+  type MonthSheet,
+  type Shift,
+  type Status,
+} from "./model";
 
 /** The shift an employee usually works on this day, or null when off. */
 export function templateShift(employee: Employee, day: CalendarDay) {
@@ -41,18 +47,9 @@ export function prefillMonth(
   return sheet;
 }
 
-/**
- * The entry for adding someone to a day by hand: their usual shift for that
- * weekday, else the clinic's hours for it, else a plain 8:00–16:00.
- */
+/** The entry for adding someone to a day by hand. */
 export function manualEntry(employee: Employee, day: CalendarDay): Entry {
-  const shift = templateShift(employee, day) ??
-    CLINIC_WEEK[day.weekdayIndex] ?? {
-      start: "08:00",
-      end: "16:00",
-      breakStart: null,
-      breakEnd: null,
-    };
+  const shift = templateShift(employee, day) ?? fallbackShift(day.weekdayIndex);
   return entryFor(employee, shift, day);
 }
 
@@ -66,20 +63,24 @@ export function sortEntries(entries: Entry[], employees: Employee[]) {
   );
 }
 
+export type StatusRange = {
+  employee: Employee;
+  /** ISO dates, inclusive. */
+  from: string;
+  to: string;
+  status: Status;
+};
+
 /**
- * Mark an employee with `status` on every day from `from` to `to` (inclusive)
- * where they work: an existing entry gets the new status, and a day their
- * template covers but that has no entry yet gains one. Public holidays keep
- * "svátek". Returns a new sheet.
+ * Mark an employee with a status on every day of the range where they work:
+ * an existing entry gets the new status, and a day their template covers but
+ * that has no entry yet gains one. Public holidays keep "svátek".
  */
 export function applyStatusRange(
   sheet: MonthSheet,
   days: CalendarDay[],
-  employee: Employee,
-  from: string,
-  to: string,
-  status: Status,
   employees: Employee[],
+  { employee, from, to, status }: StatusRange,
 ): MonthSheet {
   const next: MonthSheet = { days: { ...sheet.days } };
   for (const day of days) {

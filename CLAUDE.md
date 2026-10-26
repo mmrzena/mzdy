@@ -28,7 +28,8 @@ database, auth, API route, or worker yet; all data lives in the browser.
   or row object between table positions.
 - `src/stores/attendance-store.ts` — zustand store persisted to
   `localStorage` (`mzdy:dochazka`), hydrated after mount
-  (`skipHydration` + `rehydrate()` in the shell). Backups are JSON files
+  (`skipHydration` + `rehydrate()` in the shell). Writes are debounced
+  (300 ms) and flushed on `pagehide` / hidden tab. Backups are JSON files
   (`{ app: "mzdy", version: 1, data }`).
 - `src/components/ui/` — shadcn primitives (add more with `npm run ui:add`).
 - `src/components/layout/` — `DashboardLayout`, `MainLayout`, `Header`,
@@ -55,5 +56,9 @@ database, auth, API route, or worker yet; all data lives in the browser.
   filenames.
 - Verify changes with `npm test`, `npm run typecheck`, `npm run lint`,
   `npm run build`.
+- Shared helpers live in `src/lib/attendance/calendar.ts` (`plural`,
+  `formatDate`, `toIsoDate`, `countWorkdays`…) and `model.ts` (labels,
+  `fallbackShift`); reuse them instead of re-deriving. Confirmations use
+  `src/components/app/confirm-dialog.tsx`.
 - Never commit real staff data (e.g. the sample `září.docx`); root `*.docx`
   files are git-ignored.

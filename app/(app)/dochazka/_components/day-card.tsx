@@ -25,6 +25,7 @@ import {
 import {
   type CalendarDay,
   formatShortDate,
+  plural,
   WEEKDAY_NAMES,
 } from "@/lib/attendance/calendar";
 import type { Employee, Entry } from "@/lib/attendance/model";
@@ -79,12 +80,7 @@ export const DayCard = memo(function DayCard({
         {day.isWeekend ? <Badge variant="secondary">Víkend</Badge> : null}
         {!isEmpty ? (
           <span className="text-xs text-muted-foreground">
-            {entries.length}{" "}
-            {entries.length === 1
-              ? "osoba"
-              : entries.length < 5
-                ? "osoby"
-                : "osob"}
+            {plural(entries.length, "osoba", "osoby", "osob")}
           </span>
         ) : null}
 

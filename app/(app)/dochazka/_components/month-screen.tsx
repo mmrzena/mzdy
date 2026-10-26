@@ -16,17 +16,8 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { ConfirmDialog } from "@/components/app/confirm-dialog";
 import { PageHeader } from "@/components/layout";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -44,7 +35,14 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { addMonths, formatMonth, monthDays } from "@/lib/attendance/calendar";
+import {
+  addMonths,
+  countWorkdays,
+  formatMonth,
+  monthDays,
+  plural,
+  weekAgoInMonth,
+} from "@/lib/attendance/calendar";
 import { downloadAttendancePdf } from "@/lib/attendance/pdf";
 import {
   useAttendanceStore,
@@ -53,7 +51,25 @@ import {
 import { AbsenceDialog } from "./absence-dialog";
 import { DayCard } from "./day-card";
 
-type Confirm = "refill" | "clear" | null;
+type ConfirmKind = "refill" | "clear";
+
+const CONFIRM: Record<
+  ConfirmKind,
+  { title: string; description: string; actionLabel: string }
+> = {
+  refill: {
+    title: "Předvyplnit měsíc znovu?",
+    description:
+      "Všechny ruční úpravy v tomto měsíci, včetně dovolených, se přepíšou podle aktuálních rozvrhů zaměstnanců. Tuto akci nelze vrátit.",
+    actionLabel: "Přepsat",
+  },
+  clear: {
+    title: "Smazat docházku za celý měsíc?",
+    description:
+      "Všechny záznamy za tento měsíc se odstraní. Zaměstnanci zůstanou. Tuto akci nelze vrátit.",
+    actionLabel: "Smazat",
+  },
+};
 
 export function MonthScreen({ month }: { month: string }) {
   const router = useRouter();
@@ -64,7 +80,7 @@ export function MonthScreen({ month }: { month: string }) {
     useAttendanceStore.getState();
 
   const [absenceOpen, setAbsenceOpen] = useState(false);
-  const [confirm, setConfirm] = useState<Confirm>(null);
+  const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [exporting, setExporting] = useState(false);
 
   async function exportPdf() {
@@ -84,7 +100,7 @@ export function MonthScreen({ month }: { month: string }) {
   }
 
   const days = useMemo(() => monthDays(month), [month]);
-  const workdays = days.filter((d) => !d.isWeekend && !d.holiday).length;
+  const workdays = countWorkdays(days);
   const holidays = days.filter((d) => d.holiday && !d.isWeekend).length;
   const activeCount = employees.filter((e) => e.active).length;
 
@@ -187,7 +203,7 @@ export function MonthScreen({ month }: { month: string }) {
             month={month}
             day={day}
             employees={employees}
-            weekAgo={day.day > 7 ? days[day.day - 8].date : null}
+            weekAgo={weekAgoInMonth(day, days)}
           />
         ))}
       </div>
@@ -198,7 +214,7 @@ export function MonthScreen({ month }: { month: string }) {
     <>
       <PageHeader
         title="Docházka"
-        description={`${workdays} pracovních dnů${holidays ? `, ${holidays} ${holidays === 1 ? "svátek" : "svátky"} ve všední den` : ""}. Změny se ukládají automaticky.`}
+        description={`${plural(workdays, "pracovní den", "pracovní dny", "pracovních dnů")}${holidays ? `, ${plural(holidays, "svátek", "svátky", "svátků")} ve všední den` : ""}. Změny se ukládají automaticky.`}
         actions={
           <>
             {monthNav}
@@ -242,44 +258,25 @@ export function MonthScreen({ month }: { month: string }) {
 
       <AbsenceDialog
         month={month}
+        days={days}
         employees={employees}
         open={absenceOpen}
         onOpenChange={setAbsenceOpen}
       />
 
-      <AlertDialog
+      <ConfirmDialog
         open={confirm !== null}
         onOpenChange={(open) => !open && setConfirm(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirm === "refill"
-                ? "Předvyplnit měsíc znovu?"
-                : "Smazat docházku za celý měsíc?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirm === "refill"
-                ? "Všechny ruční úpravy v tomto měsíci, včetně dovolených, se přepíšou podle aktuálních rozvrhů zaměstnanců."
-                : "Všechny záznamy za tento měsíc se odstraní. Zaměstnanci zůstanou."}{" "}
-              Tuto akci nelze vrátit.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Zrušit</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => {
-                if (confirm === "refill") prefillMonth(month);
-                if (confirm === "clear") clearMonth(month);
-                setConfirm(null);
-              }}
-            >
-              {confirm === "refill" ? "Přepsat" : "Smazat"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title={confirm ? CONFIRM[confirm].title : ""}
+        description={confirm ? CONFIRM[confirm].description : ""}
+        actionLabel={confirm ? CONFIRM[confirm].actionLabel : ""}
+        destructive
+        onConfirm={() => {
+          if (confirm === "refill") prefillMonth(month);
+          if (confirm === "clear") clearMonth(month);
+          setConfirm(null);
+        }}
+      />
     </>
   );
 }

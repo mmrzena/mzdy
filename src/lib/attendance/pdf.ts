@@ -6,8 +6,24 @@ import type {
   TDocumentDefinitions,
 } from "pdfmake/interfaces";
 
-import { formatMonth, monthDays, WEEKDAY_NAMES } from "./calendar";
-import type { ContractType, Employee, Entry, MonthSheet } from "./model";
+import {
+  type CalendarDay,
+  countWorkdays,
+  formatDate,
+  formatMonth,
+  formatShortDate,
+  monthDays,
+  plural,
+  WEEKDAY_NAMES,
+} from "./calendar";
+import {
+  CONTRACT_LABEL,
+  type ContractType,
+  type Employee,
+  type Entry,
+  type MonthSheet,
+  STATUS_LABEL,
+} from "./model";
 
 /**
  * The month as a pdfmake document: A4 landscape, one block per day with
@@ -26,6 +42,7 @@ const C = {
   red: "#f43f5e",
   redDark: "#be123c",
   absentFill: "#fdecef",
+  absentSwatch: "#f8b4c1",
   dpcFill: "#eaf0fa",
   dpcSwatch: "#b4c6e7",
   dppFill: "#f1f3f6",
@@ -38,19 +55,10 @@ const FILL_BY_CONTRACT: Record<ContractType, string | undefined> = {
   DPP: C.dppFill,
 };
 
-const CONTRACT_TAG: Record<ContractType, string> = {
-  HPP: "",
-  DPC: "DPČ",
-  DPP: "DPP",
-};
-
-const STATUS_TEXT: Record<Entry["status"], string> = {
-  pritomen: "ano",
-  dovolena: "dovolená",
-  nemoc: "nemoc",
-  lekar: "lékař",
-  svatek: "svátek",
-};
+/** Present reads "ano", as in the clinic's sheet; absences by their name. */
+function statusText(status: Entry["status"]) {
+  return status === "pritomen" ? "ano" : STATUS_LABEL[status].toLowerCase();
+}
 
 const MARGIN_X = 36;
 const HEADER_HEIGHT = 96;
@@ -60,18 +68,6 @@ const WIDTHS: (number | string)[] = [74, "*", 50, 50, 90, 78];
 /** "07:30" → "7:30", as written in the clinic's sheet. */
 export function sheetTime(value: string) {
   return value.replace(/^0(\d)/, "$1");
-}
-
-/** "2026-09-01" → "01.09.2026" */
-export function sheetDate(iso: string) {
-  const [year, month, day] = iso.split("-");
-  return `${day}.${month}.${year}`;
-}
-
-function plural(n: number, one: string, few: string, many: string) {
-  if (n === 1) return `${n} ${one}`;
-  if (n >= 2 && n <= 4) return `${n} ${few}`;
-  return `${n} ${many}`;
 }
 
 const cellPadding = {
@@ -115,7 +111,10 @@ function columnHeader(): Content {
 function entryCells(entry: Entry, employee: Employee | undefined): TableCell[] {
   const fill = employee ? FILL_BY_CONTRACT[employee.contract] : undefined;
   const present = entry.status === "pritomen";
-  const tag = employee ? CONTRACT_TAG[employee.contract] : "";
+  const tag =
+    employee && employee.contract !== "HPP"
+      ? CONTRACT_LABEL[employee.contract].short
+      : "";
   // A new object per cell: pdfmake mutates cells while laying them out.
   const dash = () => ({ text: "—", color: C.muted, fillColor: fill });
   const brk =
@@ -137,9 +136,9 @@ function entryCells(entry: Entry, employee: Employee | undefined): TableCell[] {
     present ? { text: sheetTime(entry.end), fillColor: fill } : dash(),
     present && brk ? { text: brk, fillColor: fill } : dash(),
     present
-      ? { text: STATUS_TEXT[entry.status], color: C.slate, fillColor: fill }
+      ? { text: statusText(entry.status), color: C.slate, fillColor: fill }
       : {
-          text: STATUS_TEXT[entry.status],
+          text: statusText(entry.status),
           bold: true,
           color: C.redDark,
           fillColor: C.absentFill,
@@ -148,29 +147,30 @@ function entryCells(entry: Entry, employee: Employee | undefined): TableCell[] {
 }
 
 function dayBlock(
-  weekday: string,
-  date: string,
-  holiday: string | null,
-  isWeekend: boolean,
+  day: CalendarDay,
   entries: Entry[],
   byId: Map<string, Employee>,
 ): Content {
-  const [, month, day] = date.split("-").map(Number);
   const dayCell: TableCell = {
     rowSpan: entries.length,
     stack: [
       {
-        text: weekday,
+        text: WEEKDAY_NAMES[day.weekdayIndex],
         fontSize: 7.5,
-        color: isWeekend ? C.red : C.slate,
+        color: day.isWeekend ? C.red : C.slate,
         bold: true,
         characterSpacing: 0.3,
       },
-      { text: `${day}. ${month}.`, fontSize: 11, bold: true, color: C.navy },
-      ...(holiday
+      {
+        text: formatShortDate(day.date),
+        fontSize: 11,
+        bold: true,
+        color: C.navy,
+      },
+      ...(day.holiday
         ? [
             {
-              text: holiday,
+              text: day.holiday,
               fontSize: 6.5,
               color: C.redDark,
               margin: [0, 1, 4, 0] as [number, number, number, number],
@@ -228,16 +228,7 @@ export function attendancePdf(
     const entries = sheet.days[day.date] ?? [];
     if (entries.length === 0) continue;
     for (const e of entries) people.add(e.employeeId);
-    blocks.push(
-      dayBlock(
-        WEEKDAY_NAMES[day.weekdayIndex],
-        day.date,
-        day.holiday,
-        day.isWeekend,
-        entries,
-        byId,
-      ),
-    );
+    blocks.push(dayBlock(day, entries, byId));
   }
   if (blocks.length === 0) {
     blocks.push({
@@ -248,9 +239,8 @@ export function attendancePdf(
     });
   }
 
-  const workdays = days.filter((d) => !d.isWeekend && !d.holiday).length;
+  const workdays = countWorkdays(days);
   const title = `Docházka – ${formatMonth(month)}`;
-  const generated = `${generatedAt.getDate()}. ${generatedAt.getMonth() + 1}. ${generatedAt.getFullYear()}`;
 
   return {
     pageSize: "A4",
@@ -333,12 +323,12 @@ export function attendancePdf(
           columns: [
             legendItem(C.dpcSwatch, "DPČ"),
             legendItem(C.dppSwatch, "DPP"),
-            legendItem("#f8b4c1", "Nepřítomnost"),
+            legendItem(C.absentSwatch, "Nepřítomnost"),
           ],
         },
         {
           width: "auto",
-          text: `Vytvořeno ${generated}`,
+          text: `Vytvořeno ${formatDate(generatedAt)}`,
           color: C.muted,
           margin: [0, 0, 18, 0],
         },

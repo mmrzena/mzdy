@@ -5,16 +5,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { plural, toIsoDate } from "@/lib/attendance/calendar";
 import {
   type AttendanceData,
   attendanceDataSchema,
@@ -31,13 +23,10 @@ import { useAttendanceStore } from "@/stores/attendance-store";
 const backupSchema = z.object({
   app: z.literal("mzdy"),
   version: z.literal(1),
+  exportedAt: z.string().optional(),
   data: attendanceDataSchema,
 });
-
-function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+type Backup = z.infer<typeof backupSchema>;
 
 export function BackupMenu() {
   const fileInput = useRef<HTMLInputElement>(null);
@@ -45,7 +34,7 @@ export function BackupMenu() {
 
   function download() {
     const { employees, months } = useAttendanceStore.getState();
-    const backup = {
+    const backup: Backup = {
       app: "mzdy",
       version: 1,
       exportedAt: new Date().toISOString(),
@@ -57,7 +46,7 @@ export function BackupMenu() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `mzdy-zaloha-${todayIso()}.json`;
+    link.download = `mzdy-zaloha-${toIsoDate(new Date())}.json`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -103,36 +92,20 @@ export function BackupMenu() {
           if (file) void readFile(file);
         }}
       />
-      <AlertDialog
+      <ConfirmDialog
         open={pending !== null}
         onOpenChange={(open) => !open && setPending(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Obnovit data ze zálohy?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Všichni zaměstnanci a veškerá docházka v tomto prohlížeči budou
-              nahrazeny obsahem zálohy ({pending?.employees.length ?? 0}{" "}
-              zaměstnanců, {Object.keys(pending?.months ?? {}).length} měsíců).
-              Tuto akci nelze vrátit.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Zrušit</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (pending) {
-                  useAttendanceStore.getState().replaceAll(pending);
-                  toast.success("Data byla obnovena ze zálohy.");
-                }
-                setPending(null);
-              }}
-            >
-              Nahradit data
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Obnovit data ze zálohy?"
+        description={`Všichni zaměstnanci a veškerá docházka v tomto prohlížeči budou nahrazeny obsahem zálohy (${plural(pending?.employees.length ?? 0, "zaměstnanec", "zaměstnanci", "zaměstnanců")}, ${plural(Object.keys(pending?.months ?? {}).length, "měsíc", "měsíce", "měsíců")}). Tuto akci nelze vrátit.`}
+        actionLabel="Nahradit data"
+        onConfirm={() => {
+          if (pending) {
+            useAttendanceStore.getState().replaceAll(pending);
+            toast.success("Data byla obnovena ze zálohy.");
+          }
+          setPending(null);
+        }}
+      />
     </>
   );
 }

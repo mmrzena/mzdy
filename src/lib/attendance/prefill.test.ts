@@ -44,15 +44,12 @@ test("holiday marks usual workers as svátek", () => {
 
 test("vacation range updates entries and skips holidays", () => {
   const sheet = prefillMonth(days, employees);
-  const next = applyStatusRange(
-    sheet,
-    days,
-    nurse,
-    "2026-09-25",
-    "2026-09-29",
-    "dovolena",
-    employees,
-  );
+  const next = applyStatusRange(sheet, days, employees, {
+    employee: nurse,
+    from: "2026-09-25",
+    to: "2026-09-29",
+    status: "dovolena",
+  });
   assert.equal(next.days["2026-09-25"][0].status, "dovolena");
   assert.equal(next.days["2026-09-26"].length, 0); // weekend untouched
   assert.equal(next.days["2026-09-28"][0].status, "svatek");
@@ -60,12 +57,12 @@ test("vacation range updates entries and skips holidays", () => {
   assert.equal(sheet.days["2026-09-25"][0].status, "pritomen"); // immutable
 });
 
-test("manual entry falls back to clinic hours, then 8–16", () => {
+test("manual entry falls back to clinic hours, then 8–16 with a break", () => {
   const weekday = manualEntry(dpp, days[0]);
   assert.equal(weekday.start, "07:00");
   const saturday = manualEntry(dpp, days[18]);
   assert.equal(saturday.start, "08:00");
-  assert.equal(saturday.breakStart, null);
+  assert.equal(saturday.breakStart, "12:00");
 });
 
 test("shift validation", () => {

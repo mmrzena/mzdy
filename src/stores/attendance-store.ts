@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { type PersistStorage, persist } from "zustand/middleware";
 
 import { type CalendarDay, monthDays } from "@/lib/attendance/calendar";
 import type {
@@ -8,17 +8,57 @@ import type {
   Employee,
   Entry,
   MonthSheet,
-  Status,
 } from "@/lib/attendance/model";
 import {
   applyStatusRange,
   manualEntry,
   prefillDay,
   prefillMonth,
+  type StatusRange,
   sortEntries,
 } from "@/lib/attendance/prefill";
 
 export type EmployeeInput = Omit<Employee, "id">;
+
+type Persisted = Pick<AttendanceData, "employees" | "months">;
+
+/**
+ * localStorage persistence that serializes at most once per `delayMs`.
+ * Without it every keystroke re-stringifies the whole multi-year history.
+ * A pending write is flushed when the page is hidden or unloaded, so nothing
+ * typed is lost.
+ */
+function debouncedLocalStorage(delayMs: number): PersistStorage<Persisted> {
+  let pending: (() => void) | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const flush = () => {
+    clearTimeout(timer);
+    pending?.();
+    pending = null;
+  };
+  if (typeof window !== "undefined") {
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") flush();
+    });
+  }
+  return {
+    getItem: (name) => {
+      const raw = localStorage.getItem(name);
+      return raw === null ? null : JSON.parse(raw);
+    },
+    setItem: (name, value) => {
+      pending = () => localStorage.setItem(name, JSON.stringify(value));
+      clearTimeout(timer);
+      timer = setTimeout(flush, delayMs);
+    },
+    removeItem: (name) => {
+      pending = null;
+      clearTimeout(timer);
+      localStorage.removeItem(name);
+    },
+  };
+}
 
 type AttendanceState = AttendanceData & {
   addEmployee: (input: EmployeeInput) => void;
@@ -45,10 +85,7 @@ type AttendanceState = AttendanceData & {
   clearDay: (month: string, date: string) => void;
   applyStatusRange: (
     month: string,
-    employeeId: string,
-    from: string,
-    to: string,
-    status: Status,
+    range: Omit<StatusRange, "employee"> & { employeeId: string },
   ) => void;
 
   replaceAll: (data: AttendanceData) => void;
@@ -164,7 +201,7 @@ export const useAttendanceStore = create<AttendanceState>()(
         }),
       clearDay: (month, date) =>
         set((s) => ({ months: withDay(s.months, month, date, () => []) })),
-      applyStatusRange: (month, employeeId, from, to, status) =>
+      applyStatusRange: (month, { employeeId, ...range }) =>
         set((s) => {
           const employee = s.employees.find((e) => e.id === employeeId);
           if (!employee) return s;
@@ -174,11 +211,8 @@ export const useAttendanceStore = create<AttendanceState>()(
               [month]: applyStatusRange(
                 s.months[month] ?? { days: {} },
                 monthDays(month),
-                employee,
-                from,
-                to,
-                status,
                 s.employees,
+                { employee, ...range },
               ),
             },
           };
@@ -190,9 +224,9 @@ export const useAttendanceStore = create<AttendanceState>()(
     {
       name: "mzdy:dochazka",
       version: 1,
-      storage: createJSONStorage(() => localStorage),
+      storage: debouncedLocalStorage(300),
       partialize: (s) => ({ employees: s.employees, months: s.months }),
-      // Hydrated from the browser after mount (see StoreHydrator), so the
+      // Hydrated after mount (rehydrate() in app/(app)/layout.tsx) so the
       // server render and the first client render agree.
       skipHydration: true,
     },

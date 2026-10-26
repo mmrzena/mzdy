@@ -15,7 +15,7 @@ import { useAttendanceStore } from "@/stores/attendance-store";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Load the saved data from this browser once, after the first render.
+  // After mount, so the first client render matches the server render.
   useEffect(() => {
     void useAttendanceStore.persist.rehydrate();
   }, []);

@@ -12,18 +12,9 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { ConfirmDialog } from "@/components/app/confirm-dialog";
+import { ContractBadge } from "@/components/app/contract-badge";
 import { PageHeader } from "@/components/layout";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -50,7 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CONTRACT_LABEL, type Employee } from "@/lib/attendance/model";
+import type { Employee } from "@/lib/attendance/model";
 import { cn } from "@/lib/utils";
 import {
   isEmployeeUsed,
@@ -159,14 +150,7 @@ export function EmployeesScreen() {
                   </TableCell>
                   <TableCell className="font-medium">{employee.name}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        employee.contract === "HPP" ? "secondary" : "outline"
-                      }
-                      title={CONTRACT_LABEL[employee.contract].long}
-                    >
-                      {CONTRACT_LABEL[employee.contract].short}
-                    </Badge>
+                    <ContractBadge contract={employee.contract} />
                   </TableCell>
                   <TableCell>{weekSummary(employee.week)}</TableCell>
                   <TableCell>
@@ -215,32 +199,18 @@ export function EmployeesScreen() {
         onOpenChange={(open) => !open && setEditing(null)}
       />
 
-      <AlertDialog
+      <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Smazat {deleting?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Zaměstnanec zatím nemá žádnou docházku, takže se nic dalšího
-              neztratí.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Zrušit</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => {
-                if (deleting) deleteEmployee(deleting.id);
-                setDeleting(null);
-              }}
-            >
-              Smazat
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title={`Smazat ${deleting?.name}?`}
+        description="Zaměstnanec zatím nemá žádnou docházku, takže se nic dalšího neztratí."
+        actionLabel="Smazat"
+        destructive
+        onConfirm={() => {
+          if (deleting) deleteEmployee(deleting.id);
+          setDeleting(null);
+        }}
+      />
     </>
   );
 }

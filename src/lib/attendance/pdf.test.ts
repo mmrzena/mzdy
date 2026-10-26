@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import { monthDays } from "./calendar";
 import { CLINIC_WEEK, EMPTY_WEEK, type Employee } from "./model";
-import { attendancePdf, sheetDate, sheetTime } from "./pdf";
+import { attendancePdf, sheetTime } from "./pdf";
 import { applyStatusRange, manualEntry, prefillMonth } from "./prefill";
 
 const hpp: Employee = {
@@ -39,15 +39,12 @@ const plain = (c: Cell) =>
 
 function build() {
   let sheet = prefillMonth(days, employees);
-  sheet = applyStatusRange(
-    sheet,
-    days,
-    hpp,
-    "2026-09-02",
-    "2026-09-02",
-    "dovolena",
-    employees,
-  );
+  sheet = applyStatusRange(sheet, days, employees, {
+    employee: hpp,
+    from: "2026-09-02",
+    to: "2026-09-02",
+    status: "dovolena",
+  });
   sheet.days["2026-09-19"] = [manualEntry(dpp, days[18])];
   const doc = attendancePdf("2026-09", sheet, employees);
   const blocks = doc.content as unknown as Block[];
@@ -57,7 +54,6 @@ function build() {
 test("formats like the clinic sheet", () => {
   assert.equal(sheetTime("07:30"), "7:30");
   assert.equal(sheetTime("12:00"), "12:00");
-  assert.equal(sheetDate("2026-09-01"), "01.09.2026");
 });
 
 test("one block per day with entries, skipping empty weekends", () => {
