@@ -44,17 +44,19 @@ export const ABSENCE_STATUSES = [
   "dovolena",
   "neplacene_volno",
   "pracovni_cesta",
-  "pn_ocr",
+  "pn",
+  "ocr",
   "prekazky_zamestnavatel",
 ] as const;
 
 export const STATUSES = ["pritomen", ...ABSENCE_STATUSES, "svatek"] as const;
 export type Status = (typeof STATUSES)[number];
 
-/** Statuses from before the clinic's reason list; mapped when data is read. */
+/** Retired status values and what they read as now (saves, backups). */
 const LEGACY_STATUS: Record<string, Status> = {
-  nemoc: "pn_ocr",
-  lekar: "pn_ocr",
+  nemoc: "pn",
+  lekar: "pn",
+  pn_ocr: "pn",
 };
 
 export function migrateStatus(value: unknown): unknown {
@@ -68,7 +70,8 @@ export const STATUS_LABEL: Record<Status, string> = {
   dovolena: "Dovolená",
   neplacene_volno: "Neplacené volno",
   pracovni_cesta: "Pracovní cesta",
-  pn_ocr: "Pracovní neschopnost / OČR",
+  pn: "Pracovní neschopnost",
+  ocr: "Ošetřování člena rodiny (OČR)",
   prekazky_zamestnavatel: "Překážky na straně zaměstnavatele",
   svatek: "Svátek",
 };
@@ -79,7 +82,8 @@ export const STATUS_SHORT: Record<Status, string> = {
   dovolena: "Dovolená",
   neplacene_volno: "Neplac. volno",
   pracovni_cesta: "Prac. cesta",
-  pn_ocr: "PN / OČR",
+  pn: "PN",
+  ocr: "OČR",
   prekazky_zamestnavatel: "Překážky zam.",
   svatek: "Svátek",
 };

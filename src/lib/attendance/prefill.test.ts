@@ -82,7 +82,7 @@ test("shift validation", () => {
   );
 });
 
-test("old statuses read as the clinic's PN / OČR", () => {
+test("old statuses read as PN", () => {
   const old = {
     employeeId: "a",
     status: "nemoc",
@@ -91,7 +91,9 @@ test("old statuses read as the clinic's PN / OČR", () => {
     breakStart: null,
     breakEnd: null,
   };
-  assert.equal(entrySchema.parse(old).status, "pn_ocr");
-  assert.equal(entrySchema.parse({ ...old, status: "lekar" }).status, "pn_ocr");
+  assert.equal(entrySchema.parse(old).status, "pn");
+  assert.equal(entrySchema.parse({ ...old, status: "lekar" }).status, "pn");
+  assert.equal(entrySchema.parse({ ...old, status: "pn_ocr" }).status, "pn");
+  assert.equal(entrySchema.parse({ ...old, status: "ocr" }).status, "ocr");
   assert.equal(entrySchema.safeParse({ ...old, status: "x" }).success, false);
 });

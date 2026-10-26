@@ -224,8 +224,9 @@ export const useAttendanceStore = create<AttendanceState>()(
     }),
     {
       name: "mzdy:dochazka",
-      version: 2,
-      // v1 → v2: "nemoc" / "lekar" became the clinic's "pn_ocr".
+      version: 3,
+      // Older saves: "nemoc" / "lekar" (v1) and the combined "pn_ocr" (v2)
+      // become "pn". See migrateStatus.
       migrate: (persisted) => {
         const data = persisted as Persisted;
         for (const sheet of Object.values(data.months ?? {})) {

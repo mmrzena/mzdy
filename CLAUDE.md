@@ -60,7 +60,7 @@ database, auth, API route, or worker yet; all data lives in the browser.
 - Verify changes with `npm test`, `npm run typecheck`, `npm run lint`,
   `npm run build`.
 - Statuses: `pritomen`, the clinic's absence reasons (`ABSENCE_STATUSES`:
-  dovolená, neplacené volno, pracovní cesta, PN / OČR, překážky na straně
+  dovolená, neplacené volno, pracovní cesta, pracovní neschopnost (PN), OČR, překážky na straně
   zaměstnavatele) and `svatek`. Old values are mapped by `migrateStatus`
   (zod preprocess + persist v2 migration); keep that map when renaming.
 - Contract colours (HPP navy, DPČ blue, DPP grey) are theme tokens
