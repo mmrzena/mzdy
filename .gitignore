@@ -17,3 +17,6 @@ next-env.d.ts
 
 # Sample documents from the clinic contain real staff data
 /*.docx
+
+# Backups contain real staff data
+/mzdy-zaloha-*.json
