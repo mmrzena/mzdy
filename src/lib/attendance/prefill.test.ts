@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { monthDays } from "./calendar";
-import { CLINIC_WEEK, EMPTY_WEEK, type Employee, shiftIssue } from "./model";
+import {
+  CLINIC_WEEK,
+  EMPTY_WEEK,
+  type Employee,
+  entrySchema,
+  shiftIssue,
+} from "./model";
 import { applyStatusRange, manualEntry, prefillMonth } from "./prefill";
 
 const nurse: Employee = {
@@ -74,4 +80,18 @@ test("shift validation", () => {
     shiftIssue({ ...ok, breakStart: "16:00", breakEnd: "16:30" }) ?? "",
     /uvnitř/,
   );
+});
+
+test("old statuses read as the clinic's PN / OČR", () => {
+  const old = {
+    employeeId: "a",
+    status: "nemoc",
+    start: "07:00",
+    end: "15:00",
+    breakStart: null,
+    breakEnd: null,
+  };
+  assert.equal(entrySchema.parse(old).status, "pn_ocr");
+  assert.equal(entrySchema.parse({ ...old, status: "lekar" }).status, "pn_ocr");
+  assert.equal(entrySchema.safeParse({ ...old, status: "x" }).success, false);
 });

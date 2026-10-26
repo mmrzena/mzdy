@@ -22,7 +22,10 @@ database, auth, API route, or worker yet; all data lives in the browser.
   schemas, Czech labels, shift validation), `calendar.ts` (UTC date helpers,
   Czech public holidays incl. Easter), `prefill.ts` (month/day prefill,
   status ranges).
-  `pdf.ts` builds the month PDF (pdfmake, A4 landscape, brand styling,
+  `summary.ts` computes days/hours per employee and status (hours = end −
+  start − lunch break, § 88 ZP; absences count the planned shift).
+  `pdf.ts` builds the month PDF (pdfmake, A4 portrait, brand styling, last
+  page = hours summary,
   same colour meaning as the clinic's Word sheet); pdfmake + fonts load only
   on click. pdfmake mutates cell objects during layout, so never share a cell
   or row object between table positions.
@@ -56,6 +59,12 @@ database, auth, API route, or worker yet; all data lives in the browser.
   filenames.
 - Verify changes with `npm test`, `npm run typecheck`, `npm run lint`,
   `npm run build`.
+- Statuses: `pritomen`, the clinic's absence reasons (`ABSENCE_STATUSES`:
+  dovolená, neplacené volno, pracovní cesta, PN / OČR, překážky na straně
+  zaměstnavatele) and `svatek`. Old values are mapped by `migrateStatus`
+  (zod preprocess + persist v2 migration); keep that map when renaming.
+- Contract colours (HPP navy, DPČ blue, DPP grey) are theme tokens
+  `--contract-*` used by `ContractBadge`; the PDF mirrors them.
 - Shared helpers live in `src/lib/attendance/calendar.ts` (`plural`,
   `formatDate`, `toIsoDate`, `countWorkdays`…) and `model.ts` (labels,
   `fallbackShift`); reuse them instead of re-deriving. Confirmations use

@@ -9,6 +9,7 @@ import {
   RiMore2Line,
   RiRefreshLine,
   RiSuitcaseLine,
+  RiTimeLine,
   RiUserAddLine,
 } from "@remixicon/react";
 import Link from "next/link";
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   addMonths,
   countWorkdays,
@@ -50,6 +52,7 @@ import {
 } from "@/stores/attendance-store";
 import { AbsenceDialog } from "./absence-dialog";
 import { DayCard } from "./day-card";
+import { MonthSummary } from "./month-summary";
 
 type ConfirmKind = "refill" | "clear";
 
@@ -196,17 +199,30 @@ export function MonthScreen({ month }: { month: string }) {
     );
   } else {
     body = (
-      <div className="grid min-w-0 gap-3">
-        {days.map((day) => (
-          <DayCard
-            key={day.date}
-            month={month}
-            day={day}
-            employees={employees}
-            weekAgo={weekAgoInMonth(day, days)}
-          />
-        ))}
-      </div>
+      <Tabs defaultValue="dny" className="min-w-0 gap-4">
+        <TabsList>
+          <TabsTrigger value="dny">
+            <RiCalendarCheckLine /> Rozpis po dnech
+          </TabsTrigger>
+          <TabsTrigger value="souhrn">
+            <RiTimeLine /> Souhrn hodin
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="dny" className="grid min-w-0 gap-3">
+          {days.map((day) => (
+            <DayCard
+              key={day.date}
+              month={month}
+              day={day}
+              employees={employees}
+              weekAgo={weekAgoInMonth(day, days)}
+            />
+          ))}
+        </TabsContent>
+        <TabsContent value="souhrn" className="min-w-0">
+          <MonthSummary month={month} />
+        </TabsContent>
+      </Tabs>
     );
   }
 

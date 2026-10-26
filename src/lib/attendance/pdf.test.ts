@@ -47,7 +47,7 @@ function build() {
   });
   sheet.days["2026-09-19"] = [manualEntry(dpp, days[18])];
   const doc = attendancePdf("2026-09", sheet, employees);
-  const blocks = doc.content as unknown as Block[];
+  const blocks = (doc.content as unknown as Block[]).slice(0, -1);
   return { doc, blocks };
 }
 
@@ -58,7 +58,7 @@ test("formats like the clinic sheet", () => {
 
 test("one block per day with entries, skipping empty weekends", () => {
   const { doc, blocks } = build();
-  assert.equal(doc.pageOrientation, "landscape");
+  assert.equal(doc.pageOrientation, "portrait");
   // 22 weekdays in September 2026 + Saturday 19th; Sunday 20th is empty.
   assert.equal(blocks.length, 23);
 });
@@ -82,7 +82,7 @@ test("rows carry day, times, contract tint and absences", () => {
   assert.equal(first[1][1].fillColor, "#eaf0fa");
 
   const vacation = blocks[1].table.body[0];
-  assert.deepEqual(vacation.slice(2).map(plain), ["—", "—", "—", "dovolená"]);
+  assert.deepEqual(vacation.slice(2).map(plain), ["—", "—", "—", "Dovolená"]);
   assert.equal(vacation[5].fillColor, "#fdecef");
 });
 
@@ -93,7 +93,7 @@ test("holiday days show the holiday and svátek", () => {
   );
   assert.ok(holiday);
   assert.equal(holiday.table.body[0][0].stack?.[2].text, "Den české státnosti");
-  assert.equal(plain(holiday.table.body[0][5]), "svátek");
+  assert.equal(plain(holiday.table.body[0][5]), "Svátek");
 });
 
 test("absent rows get a separate dash object per column", () => {
@@ -101,4 +101,18 @@ test("absent rows get a separate dash object per column", () => {
   const vacation = blocks[1].table.body[0];
   assert.notEqual(vacation[2], vacation[3]);
   assert.notEqual(vacation[3], vacation[4]);
+});
+
+test("ends with an hours summary page", () => {
+  const { doc } = build();
+  const content = doc.content as unknown as {
+    pageBreak?: string;
+    stack?: { table?: { body: Cell[][] } }[];
+  }[];
+  const last = content.at(-1);
+  assert.equal(last?.pageBreak, "before");
+  const body = last?.stack?.[0].table?.body ?? [];
+  // header + 3 employees + total
+  assert.equal(body.length, 5);
+  assert.equal(plain(body.at(-1)?.[0] ?? {}), "Celkem");
 });

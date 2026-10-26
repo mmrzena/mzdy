@@ -9,6 +9,7 @@ import type {
   Entry,
   MonthSheet,
 } from "@/lib/attendance/model";
+import { migrateStatus } from "@/lib/attendance/model";
 import {
   applyStatusRange,
   manualEntry,
@@ -223,7 +224,19 @@ export const useAttendanceStore = create<AttendanceState>()(
     }),
     {
       name: "mzdy:dochazka",
-      version: 1,
+      version: 2,
+      // v1 → v2: "nemoc" / "lekar" became the clinic's "pn_ocr".
+      migrate: (persisted) => {
+        const data = persisted as Persisted;
+        for (const sheet of Object.values(data.months ?? {})) {
+          for (const entries of Object.values(sheet.days)) {
+            for (const entry of entries) {
+              entry.status = migrateStatus(entry.status) as Entry["status"];
+            }
+          }
+        }
+        return data as AttendanceState;
+      },
       storage: debouncedLocalStorage(300),
       partialize: (s) => ({ employees: s.employees, months: s.months }),
       // Hydrated after mount (rehydrate() in app/(app)/layout.tsx) so the

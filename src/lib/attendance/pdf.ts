@@ -17,16 +17,24 @@ import {
   WEEKDAY_NAMES,
 } from "./calendar";
 import {
+  ABSENCE_STATUSES,
   CONTRACT_LABEL,
   type ContractType,
   type Employee,
   type Entry,
   type MonthSheet,
-  STATUS_LABEL,
+  STATUS_SHORT,
+  type Status,
 } from "./model";
+import {
+  formatHours,
+  type MonthSummary,
+  type StatusTotals,
+  summarizeMonth,
+} from "./summary";
 
 /**
- * The month as a pdfmake document: A4 landscape, one block per day with
+ * The month as a pdfmake document: A4 portrait, one block per day with
  * entries (never split across pages), column headings repeated at the top of
  * every page, in the brand palette. Same information and colour meaning as the
  * clinic's original Word sheet (DPČ blue, DPP grey, absence red), softened.
@@ -47,6 +55,14 @@ const C = {
   dpcSwatch: "#b4c6e7",
   dppFill: "#f1f3f6",
   dppSwatch: "#d5dae2",
+  hppSwatch: "#0f1f3d",
+};
+
+/** Badge colours, matching the app's ContractBadge (theme.css). */
+const CONTRACT_BADGE: Record<ContractType, { fill: string; color: string }> = {
+  HPP: { fill: C.hppSwatch, color: "#ffffff" },
+  DPC: { fill: C.dpcSwatch, color: "#0a2f4f" },
+  DPP: { fill: C.dppSwatch, color: "#1e293b" },
 };
 
 const FILL_BY_CONTRACT: Record<ContractType, string | undefined> = {
@@ -55,15 +71,15 @@ const FILL_BY_CONTRACT: Record<ContractType, string | undefined> = {
   DPP: C.dppFill,
 };
 
-/** Present reads "ano", as in the clinic's sheet; absences by their name. */
+/** Present reads "ano", as in the clinic's sheet; absences by short name. */
 function statusText(status: Entry["status"]) {
-  return status === "pritomen" ? "ano" : STATUS_LABEL[status].toLowerCase();
+  return status === "pritomen" ? "ano" : STATUS_SHORT[status];
 }
 
 const MARGIN_X = 36;
 const HEADER_HEIGHT = 96;
 /** day | name | od | do | pause | status */
-const WIDTHS: (number | string)[] = [74, "*", 50, 50, 90, 78];
+const WIDTHS: (number | string)[] = [60, "*", 34, 34, 70, 72];
 
 /** "07:30" → "7:30", as written in the clinic's sheet. */
 export function sheetTime(value: string) {
@@ -213,6 +229,139 @@ function legendItem(color: string, label: string): Column {
   };
 }
 
+const SUMMARY_ABSENCES: Status[] = [...ABSENCE_STATUSES, "svatek"];
+
+/** Each non-zero absence on its own line: "Dovolená   2 dny · 16 h". */
+function absenceLines(totals: StatusTotals): TableCell {
+  const lines = SUMMARY_ABSENCES.filter((s) => totals[s].days > 0).map(
+    (s): Content => ({
+      columns: [
+        { width: 62, text: STATUS_SHORT[s], color: C.slate },
+        {
+          width: "*",
+          text: [
+            plural(totals[s].days, "den", "dny", "dní"),
+            {
+              text: ` · ${formatHours(totals[s].minutes)} h`,
+              color: C.slate,
+            },
+          ],
+        },
+      ],
+    }),
+  );
+  return lines.length > 0 ? { stack: lines } : { text: "—", color: C.muted };
+}
+
+function summaryRow(
+  name: TableCell,
+  contract: TableCell,
+  totals: StatusTotals,
+): TableCell[] {
+  return [
+    name,
+    contract,
+    { text: String(totals.pritomen.days), alignment: "right" },
+    {
+      text: formatHours(totals.pritomen.minutes),
+      alignment: "right",
+      bold: true,
+    },
+    absenceLines(totals),
+  ];
+}
+
+/** A small coloured pill, like the app's ContractBadge. */
+function contractBadge(contract: ContractType): TableCell {
+  const { fill, color } = CONTRACT_BADGE[contract];
+  return {
+    table: {
+      body: [
+        [
+          {
+            text: CONTRACT_LABEL[contract].short,
+            bold: true,
+            fontSize: 7,
+            color,
+            fillColor: fill,
+          },
+        ],
+      ],
+    },
+    layout: {
+      hLineWidth: () => 0,
+      vLineWidth: () => 0,
+      paddingLeft: () => 4,
+      paddingRight: () => 4,
+      paddingTop: () => 1,
+      paddingBottom: () => 1,
+    },
+  };
+}
+
+/** The last page: days and hours per employee, for payroll. */
+function summarySection(summary: MonthSummary): Content {
+  const head = [
+    "Zaměstnanec",
+    "Úvazek",
+    "Dny",
+    "Hodiny",
+    "Nepřítomnost a svátky",
+  ].map((text, i) => ({
+    text: text.toUpperCase(),
+    fontSize: 7,
+    bold: true,
+    color: C.slate,
+    characterSpacing: 0.6,
+    alignment: i === 2 || i === 3 ? ("right" as const) : undefined,
+  }));
+  const rows = summary.rows.map(({ employee, totals }) =>
+    summaryRow(
+      { text: employee.name },
+      contractBadge(employee.contract),
+      totals,
+    ),
+  );
+  const totalRow = summaryRow(
+    { text: "Celkem", bold: true },
+    { text: "" },
+    summary.total,
+  );
+  return {
+    pageBreak: "before",
+    stack: [
+      {
+        table: {
+          headerRows: 1,
+          widths: ["*", 38, 30, 44, 170],
+          body: [head, ...rows, totalRow],
+        },
+        layout: {
+          paddingLeft: (i: number) => (i === 0 ? 0 : 6),
+          paddingRight: () => 6,
+          paddingTop: () => 4,
+          paddingBottom: () => 4,
+          hLineWidth: (i: number, node) =>
+            i === 1 || i === node.table.body.length - 1 ? 1 : i === 0 ? 0 : 0.5,
+          hLineColor: (i: number) => (i === 1 ? C.navy : C.rule),
+          vLineWidth: () => 0,
+        },
+      },
+      {
+        margin: [0, 10, 0, 0],
+        fontSize: 7.5,
+        color: C.slate,
+        text:
+          "Hodiny = konec − začátek − obědová pauza (pauza na jídlo a oddech se do pracovní doby nezapočítává, § 88 zákoníku práce). " +
+          "Nepřítomnosti a svátky jsou v hodinách podle směny plánované na daný den." +
+          (summary.invalid > 0
+            ? ` ${plural(summary.invalid, "záznam s neplatným časem není", "záznamy s neplatným časem nejsou", "záznamů s neplatným časem není")} v hodinách započítán.`
+            : ""),
+      },
+    ],
+  };
+}
+
 export function attendancePdf(
   month: string,
   sheet: MonthSheet,
@@ -240,11 +389,13 @@ export function attendancePdf(
   }
 
   const workdays = countWorkdays(days);
+  const summary = summarizeMonth(sheet, employees);
+  const hasSummary = summary.rows.length > 0;
   const title = `Docházka – ${formatMonth(month)}`;
 
   return {
     pageSize: "A4",
-    pageOrientation: "landscape",
+    pageOrientation: "portrait",
     pageMargins: [MARGIN_X, HEADER_HEIGHT, MARGIN_X, 44],
     info: { title, subject: "Docházka zaměstnanců" },
     defaultStyle: {
@@ -254,64 +405,69 @@ export function attendancePdf(
       lineHeight: 1.05,
     },
 
-    header: (currentPage: number, _count: number, size: ContextPageSize) => ({
-      margin: [MARGIN_X, 28, MARGIN_X, 0],
-      stack: [
-        {
-          canvas: [
-            {
-              type: "rect",
-              x: 0,
-              y: 0,
-              w: size.width - 2 * MARGIN_X,
-              h: 2.5,
-              color: C.red,
-            },
-          ],
-        },
-        currentPage === 1
-          ? {
-              margin: [0, 8, 0, 14],
-              columns: [
-                {
-                  width: "*",
-                  text: [
-                    {
-                      text: "Docházka  ",
-                      fontSize: 18,
-                      bold: true,
-                      color: C.navy,
-                    },
-                    { text: formatMonth(month), fontSize: 18, color: C.red },
-                  ],
-                },
-                {
-                  width: "auto",
-                  alignment: "right",
-                  margin: [0, 6, 0, 0],
-                  fontSize: 8.5,
-                  color: C.slate,
-                  text: `${plural(people.size, "zaměstnanec", "zaměstnanci", "zaměstnanců")}  ·  ${plural(workdays, "pracovní den", "pracovní dny", "pracovních dnů")}`,
-                },
-              ],
-            }
-          : {
-              margin: [0, 8, 0, 21],
-              columns: [
-                { text: title, fontSize: 10, bold: true, color: C.navy },
-                {
-                  text: "pokračování",
-                  alignment: "right",
-                  fontSize: 8,
-                  color: C.muted,
-                },
-              ],
-            },
-        columnHeader(),
-      ],
-    }),
+    header: (currentPage: number, pageCount: number, size: ContextPageSize) => {
+      // The summary is always the last page (it starts on a new page and fits
+      // on one for a clinic-sized team), and has its own column headings.
+      const onSummaryPage = hasSummary && currentPage === pageCount;
+      return {
+        margin: [MARGIN_X, 28, MARGIN_X, 0],
+        stack: [
+          {
+            canvas: [
+              {
+                type: "rect",
+                x: 0,
+                y: 0,
+                w: size.width - 2 * MARGIN_X,
+                h: 2.5,
+                color: C.red,
+              },
+            ],
+          },
+          currentPage === 1
+            ? {
+                margin: [0, 8, 0, 14],
+                columns: [
+                  {
+                    width: "*",
+                    text: [
+                      {
+                        text: "Docházka  ",
+                        fontSize: 18,
+                        bold: true,
+                        color: C.navy,
+                      },
+                      { text: formatMonth(month), fontSize: 18, color: C.red },
+                    ],
+                  },
+                  {
+                    width: "auto",
+                    alignment: "right",
+                    margin: [0, 6, 0, 0],
+                    fontSize: 8.5,
+                    color: C.slate,
+                    text: `${plural(people.size, "zaměstnanec", "zaměstnanci", "zaměstnanců")}  ·  ${plural(workdays, "pracovní den", "pracovní dny", "pracovních dnů")}`,
+                  },
+                ],
+              }
+            : {
+                margin: [0, 8, 0, 21],
+                columns: [
+                  { text: title, fontSize: 10, bold: true, color: C.navy },
+                  {
+                    text: onSummaryPage ? "souhrn hodin" : "pokračování",
+                    alignment: "right",
+                    fontSize: 8,
+                    color: C.muted,
+                  },
+                ],
+              },
+          ...(onSummaryPage ? [] : [columnHeader()]),
+        ],
+      };
+    },
 
-    content: blocks,
+    content: hasSummary ? [...blocks, summarySection(summary)] : blocks,
 
     footer: (currentPage: number, pageCount: number) => ({
       margin: [MARGIN_X, 14, MARGIN_X, 0],

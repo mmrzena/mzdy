@@ -39,26 +39,50 @@ export const employeeSchema = z.object({
 });
 export type Employee = z.infer<typeof employeeSchema>;
 
-export const STATUSES = [
-  "pritomen",
+/** The clinic's absence reasons, in the order they are offered. */
+export const ABSENCE_STATUSES = [
   "dovolena",
-  "nemoc",
-  "lekar",
-  "svatek",
+  "neplacene_volno",
+  "pracovni_cesta",
+  "pn_ocr",
+  "prekazky_zamestnavatel",
 ] as const;
-export const statusSchema = z.enum(STATUSES);
-export type Status = z.infer<typeof statusSchema>;
+
+export const STATUSES = ["pritomen", ...ABSENCE_STATUSES, "svatek"] as const;
+export type Status = (typeof STATUSES)[number];
+
+/** Statuses from before the clinic's reason list; mapped when data is read. */
+const LEGACY_STATUS: Record<string, Status> = {
+  nemoc: "pn_ocr",
+  lekar: "pn_ocr",
+};
+
+export function migrateStatus(value: unknown): unknown {
+  return typeof value === "string" ? (LEGACY_STATUS[value] ?? value) : value;
+}
+
+export const statusSchema = z.preprocess(migrateStatus, z.enum(STATUSES));
 
 export const STATUS_LABEL: Record<Status, string> = {
   pritomen: "Přítomen",
   dovolena: "Dovolená",
-  nemoc: "Nemoc",
-  lekar: "Lékař",
+  neplacene_volno: "Neplacené volno",
+  pracovni_cesta: "Pracovní cesta",
+  pn_ocr: "Pracovní neschopnost / OČR",
+  prekazky_zamestnavatel: "Překážky na straně zaměstnavatele",
   svatek: "Svátek",
 };
 
-/** Statuses the bulk "absence" dialog can set over a date range. */
-export const ABSENCE_STATUSES = ["dovolena", "nemoc", "lekar"] as const;
+/** For narrow places: the day-row select, table headings, the PDF. */
+export const STATUS_SHORT: Record<Status, string> = {
+  pritomen: "Přítomen",
+  dovolena: "Dovolená",
+  neplacene_volno: "Neplac. volno",
+  pracovni_cesta: "Prac. cesta",
+  pn_ocr: "PN / OČR",
+  prekazky_zamestnavatel: "Překážky zam.",
+  svatek: "Svátek",
+};
 
 /**
  * One employee on one day. Times are kept even when the status is an absence
@@ -126,6 +150,20 @@ export const EMPTY_WEEK: WeekTemplate = [
 function minutes(value: string) {
   const [h, m] = value.split(":").map(Number);
   return h * 60 + m;
+}
+
+/**
+ * Working time of a shift in minutes: end − start − lunch break. The meal
+ * break is not working time under Czech labour law (§ 88 zákoníku práce).
+ * Null when the shift is inconsistent (see shiftIssue).
+ */
+export function shiftMinutes(shift: Shift): number | null {
+  if (shiftIssue(shift)) return null;
+  const pause =
+    shift.breakStart && shift.breakEnd
+      ? minutes(shift.breakEnd) - minutes(shift.breakStart)
+      : 0;
+  return minutes(shift.end) - minutes(shift.start) - pause;
 }
 
 /** A human-readable problem with a shift, or null when it is consistent. */

@@ -34,13 +34,13 @@
   --primary-foreground: #ffffff;
 
   /* Secondary / muted — brand grey a step darker so it reads on the page bg;
-     accent — teal tint for hover / selected rows */
+     accent — brand-blue tint for hover / the active nav item */
   --secondary: #e8edf5;
   --secondary-foreground: #0f1f3d;
   --muted: #eef2f8;
   --muted-foreground: #4c5f7a;
-  --accent: #dff6f2;
-  --accent-foreground: #0f1f3d;
+  --accent: #e6edf7;
+  --accent-foreground: #0a2f4f;
 
   /* Destructive — a true red, kept apart from the rose primary */
   --destructive: #dc2626;
@@ -59,6 +59,15 @@
   --input: #dfe4ee;
   --ring: #f43f5e;
 
+  /* Contract types — same colour meaning as the clinic's sheet and the PDF:
+     HPP navy (the main contract), DPČ blue, DPP grey */
+  --contract-hpp: #0f1f3d;
+  --contract-hpp-foreground: #ffffff;
+  --contract-dpc: #b4c6e7;
+  --contract-dpc-foreground: #0a2f4f;
+  --contract-dpp: #d5dae2;
+  --contract-dpp-foreground: #1e293b;
+
   /* Charts — brand red, blue, teal, aqua, slate */
   --chart-1: #f43f5e;
   --chart-2: #0f4c81;
@@ -71,8 +80,8 @@
   --sidebar-foreground: #0f172a;
   --sidebar-primary: #f43f5e;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #dff6f2;
-  --sidebar-accent-foreground: #0f1f3d;
+  --sidebar-accent: #e6edf7;
+  --sidebar-accent-foreground: #0a2f4f;
   --sidebar-border: #dfe4ee;
   --sidebar-ring: #f43f5e;
 }
@@ -94,8 +103,8 @@
   --secondary-foreground: #e6ecf5;
   --muted: #16294d;
   --muted-foreground: #9fb0c8;
-  --accent: #113a44;
-  --accent-foreground: #5eead4;
+  --accent: #1b3460;
+  --accent-foreground: #d6e4f7;
 
   --destructive: #f87171;
   --destructive-foreground: #1f0a0a;
@@ -111,6 +120,13 @@
   --input: #1f3458;
   --ring: #fb7185;
 
+  --contract-hpp: #d6e4f7;
+  --contract-hpp-foreground: #0a2f4f;
+  --contract-dpc: #2c4677;
+  --contract-dpc-foreground: #dbe6f7;
+  --contract-dpp: #3a4454;
+  --contract-dpp-foreground: #e2e8f0;
+
   --chart-1: #fb7185;
   --chart-2: #38bdf8;
   --chart-3: #2dd4bf;
@@ -121,8 +137,8 @@
   --sidebar-foreground: #e6ecf5;
   --sidebar-primary: #fb7185;
   --sidebar-primary-foreground: #1f0a10;
-  --sidebar-accent: #113a44;
-  --sidebar-accent-foreground: #5eead4;
+  --sidebar-accent: #1b3460;
+  --sidebar-accent-foreground: #d6e4f7;
   --sidebar-border: #1f3458;
   --sidebar-ring: #fb7185;
 }
@@ -277,6 +293,12 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-contract-hpp: var(--contract-hpp);
+  --color-contract-hpp-foreground: var(--contract-hpp-foreground);
+  --color-contract-dpc: var(--contract-dpc);
+  --color-contract-dpc-foreground: var(--contract-dpc-foreground);
+  --color-contract-dpp: var(--contract-dpp);
+  --color-contract-dpp-foreground: var(--contract-dpp-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

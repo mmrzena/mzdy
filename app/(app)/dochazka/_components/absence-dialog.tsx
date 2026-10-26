@@ -76,7 +76,7 @@ function AbsenceForm({
       .applyStatusRange(month, { employeeId, from, to, status });
     const name = employees.find((e) => e.id === employeeId)?.name;
     toast.success(
-      `${name}: ${STATUS_LABEL[status].toLowerCase()} ${formatShortDate(from)}–${formatShortDate(to)} zapsána.`,
+      `${name}: ${STATUS_LABEL[status]} ${formatShortDate(from)}–${formatShortDate(to)} zapsáno.`,
     );
     onDone();
   }

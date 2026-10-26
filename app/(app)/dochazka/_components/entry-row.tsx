@@ -14,6 +14,7 @@ import {
   type Employee,
   type Entry,
   STATUS_LABEL,
+  STATUS_SHORT,
   STATUSES,
   type Status,
   shiftIssue,
@@ -22,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
 
 export const ROW_GRID =
-  "grid grid-cols-[minmax(10rem,1fr)_6.5rem_6.5rem_14rem_8.5rem_2rem] items-center gap-2";
+  "grid grid-cols-[minmax(10rem,1fr)_6.5rem_6.5rem_14rem_9.5rem_2rem] items-center gap-2";
 
 export const EntryRow = memo(function EntryRow({
   month,
@@ -93,15 +94,16 @@ export const EntryRow = memo(function EntryRow({
           size="sm"
           value={entry.status}
           aria-label={`${name} přítomnost`}
+          title={STATUS_LABEL[entry.status]}
           className={cn(
-            "w-[8.5rem]",
+            "w-[9.5rem]",
             !present && "border-warning bg-warning/15 font-medium",
           )}
           onChange={(event) => update({ status: event.target.value as Status })}
         >
           {STATUSES.map((status) => (
             <NativeSelectOption key={status} value={status}>
-              {STATUS_LABEL[status]}
+              {STATUS_SHORT[status]}
             </NativeSelectOption>
           ))}
         </NativeSelect>
