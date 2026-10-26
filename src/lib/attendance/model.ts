@@ -1,0 +1,137 @@
+import { z } from "zod";
+
+/** "HH:MM", 24-hour — the value a native `<input type="time">` produces. */
+export const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+const time = z.string().regex(TIME_PATTERN);
+
+export const CONTRACT_TYPES = ["HPP", "DPC", "DPP"] as const;
+export const contractSchema = z.enum(CONTRACT_TYPES);
+export type ContractType = z.infer<typeof contractSchema>;
+
+export const CONTRACT_LABEL: Record<
+  ContractType,
+  { short: string; long: string }
+> = {
+  HPP: { short: "HPP", long: "Hlavní pracovní poměr" },
+  DPC: { short: "DPČ", long: "Dohoda o pracovní činnosti" },
+  DPP: { short: "DPP", long: "Dohoda o provedení práce" },
+};
+
+/** One working block: start/end plus an optional lunch break. */
+export const shiftSchema = z.object({
+  start: time,
+  end: time,
+  breakStart: time.nullable(),
+  breakEnd: time.nullable(),
+});
+export type Shift = z.infer<typeof shiftSchema>;
+
+/** Usual shift per ISO weekday, index 0 = Monday … 6 = Sunday; null = off. */
+export const weekTemplateSchema = z.array(shiftSchema.nullable()).length(7);
+export type WeekTemplate = z.infer<typeof weekTemplateSchema>;
+
+export const employeeSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1),
+  contract: contractSchema,
+  active: z.boolean(),
+  week: weekTemplateSchema,
+});
+export type Employee = z.infer<typeof employeeSchema>;
+
+export const STATUSES = [
+  "pritomen",
+  "dovolena",
+  "nemoc",
+  "lekar",
+  "svatek",
+] as const;
+export const statusSchema = z.enum(STATUSES);
+export type Status = z.infer<typeof statusSchema>;
+
+export const STATUS_LABEL: Record<Status, string> = {
+  pritomen: "Přítomen",
+  dovolena: "Dovolená",
+  nemoc: "Nemoc",
+  lekar: "Lékař",
+  svatek: "Svátek",
+};
+
+/** Statuses the bulk "absence" dialog can set over a date range. */
+export const ABSENCE_STATUSES = ["dovolena", "nemoc", "lekar"] as const;
+
+/**
+ * One employee on one day. Times are kept even when the status is an absence
+ * so switching back to "přítomen" restores them.
+ */
+export const entrySchema = shiftSchema.extend({
+  employeeId: z.string().min(1),
+  status: statusSchema,
+});
+export type Entry = z.infer<typeof entrySchema>;
+
+/** A month's sheet: ISO date ("2026-09-01") → that day's entries. */
+export const monthSheetSchema = z.object({
+  days: z.record(z.string(), z.array(entrySchema)),
+});
+export type MonthSheet = z.infer<typeof monthSheetSchema>;
+
+/** Everything that is saved (and what a backup file contains). */
+export const attendanceDataSchema = z.object({
+  employees: z.array(employeeSchema),
+  /** "2026-09" → sheet. A month absent from the map has not been started. */
+  months: z.record(z.string(), monthSheetSchema),
+});
+export type AttendanceData = z.infer<typeof attendanceDataSchema>;
+
+/**
+ * The clinic's usual opening hours (Mon–Fri), offered as the starting weekly
+ * template for a new full-time employee.
+ */
+export const CLINIC_WEEK: WeekTemplate = [
+  { start: "07:00", end: "17:00", breakStart: "12:00", breakEnd: "12:30" },
+  { start: "07:00", end: "16:00", breakStart: "12:00", breakEnd: "12:30" },
+  { start: "07:45", end: "16:15", breakStart: "12:00", breakEnd: "12:30" },
+  { start: "07:45", end: "15:15", breakStart: "12:00", breakEnd: "12:30" },
+  { start: "07:30", end: "15:00", breakStart: "12:00", breakEnd: "12:30" },
+  null,
+  null,
+];
+
+export const EMPTY_WEEK: WeekTemplate = [
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+];
+
+function minutes(value: string) {
+  const [h, m] = value.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** A human-readable problem with a shift, or null when it is consistent. */
+export function shiftIssue(shift: Shift): string | null {
+  if (minutes(shift.end) <= minutes(shift.start)) {
+    return "Konec musí být později než začátek.";
+  }
+  const { breakStart, breakEnd } = shift;
+  if ((breakStart === null) !== (breakEnd === null)) {
+    return "U pauzy vyplňte začátek i konec.";
+  }
+  if (breakStart !== null && breakEnd !== null) {
+    if (minutes(breakEnd) <= minutes(breakStart)) {
+      return "Konec pauzy musí být později než její začátek.";
+    }
+    if (
+      minutes(breakStart) < minutes(shift.start) ||
+      minutes(breakEnd) > minutes(shift.end)
+    ) {
+      return "Pauza musí být uvnitř pracovní doby.";
+    }
+  }
+  return null;
+}
