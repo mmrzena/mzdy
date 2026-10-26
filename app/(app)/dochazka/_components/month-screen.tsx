@@ -85,6 +85,7 @@ export function MonthScreen({ month }: { month: string }) {
   const [absenceOpen, setAbsenceOpen] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [exporting, setExporting] = useState(false);
+  const ready = hydrated && started;
 
   async function exportPdf() {
     const { months, employees: all } = useAttendanceStore.getState();
@@ -240,38 +241,43 @@ export function MonthScreen({ month }: { month: string }) {
         actions={
           <>
             {monthNav}
-            {hydrated && started ? (
-              <div className="flex items-center gap-2">
-                <Button onClick={exportPdf} disabled={exporting}>
-                  {exporting ? <Spinner /> : <RiFilePdf2Line />} Stáhnout PDF
-                </Button>
-                <Button variant="outline" onClick={() => setAbsenceOpen(true)}>
-                  <RiSuitcaseLine /> Zadat nepřítomnost
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Další akce s měsícem"
-                    >
-                      <RiMore2Line />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => setConfirm("refill")}>
-                      <RiRefreshLine /> Předvyplnit znovu podle rozvrhů
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setConfirm("clear")}
-                    >
-                      <RiDeleteBin6Line /> Smazat docházku za měsíc
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : null}
+            {/* Always rendered (disabled until the month has data) so the
+                month switcher never moves when changing months. */}
+            <div className="flex items-center gap-2">
+              <Button onClick={exportPdf} disabled={!ready || exporting}>
+                {exporting ? <Spinner /> : <RiFilePdf2Line />} Stáhnout PDF
+              </Button>
+              <Button
+                variant="outline"
+                disabled={!ready}
+                onClick={() => setAbsenceOpen(true)}
+              >
+                <RiSuitcaseLine /> Zadat nepřítomnost
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={!ready}
+                    aria-label="Další akce s měsícem"
+                  >
+                    <RiMore2Line />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setConfirm("refill")}>
+                    <RiRefreshLine /> Předvyplnit znovu podle rozvrhů
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => setConfirm("clear")}
+                  >
+                    <RiDeleteBin6Line /> Smazat docházku za měsíc
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </>
         }
       />
