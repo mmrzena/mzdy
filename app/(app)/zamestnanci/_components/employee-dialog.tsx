@@ -272,33 +272,40 @@ function EmployeeForm({
                         )}
                       />
                       <div className="flex items-center gap-2 sm:contents">
-                        {(["start", "end"] as const).map((key) => (
-                          <Controller
-                            key={key}
-                            control={form.control}
-                            name={`week.${i}.${key}`}
-                            render={({ field }) => (
-                              <>
-                                {key === "end" ? (
-                                  <span
-                                    className="text-muted-foreground sm:hidden"
-                                    aria-hidden="true"
-                                  >
-                                    –
-                                  </span>
-                                ) : null}
-                                <TimeInput
-                                  required
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  disabled={!works}
-                                  invalid={works && Boolean(error)}
-                                  aria-label={`${dayName} ${key === "start" ? "od" : "do"}`}
-                                />
-                              </>
-                            )}
-                          />
-                        ))}
+                        <Controller
+                          control={form.control}
+                          name={`week.${i}.start`}
+                          render={({ field }) => (
+                            <TimeInput
+                              required
+                              value={field.value}
+                              onChange={field.onChange}
+                              disabled={!works}
+                              invalid={works && Boolean(error)}
+                              aria-label={`${dayName} od`}
+                            />
+                          )}
+                        />
+                        <span
+                          className="text-muted-foreground sm:hidden"
+                          aria-hidden="true"
+                        >
+                          –
+                        </span>
+                        <Controller
+                          control={form.control}
+                          name={`week.${i}.end`}
+                          render={({ field }) => (
+                            <TimeInput
+                              required
+                              value={field.value}
+                              onChange={field.onChange}
+                              disabled={!works}
+                              invalid={works && Boolean(error)}
+                              aria-label={`${dayName} do`}
+                            />
+                          )}
+                        />
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="w-10 text-xs text-muted-foreground sm:hidden">

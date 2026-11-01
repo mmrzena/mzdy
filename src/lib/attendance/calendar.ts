@@ -41,7 +41,8 @@ export type CalendarDay = {
   holiday: string | null;
 };
 
-const pad = (n: number) => String(n).padStart(2, "0");
+/** 7 → "07" */
+export const pad = (n: number) => String(n).padStart(2, "0");
 
 export function toMonthKey(year: number, month: number) {
   return `${year}-${pad(month)}`;

@@ -74,12 +74,12 @@ function withDay(
   update: (entries: Entry[]) => Entry[],
 ) {
   const sheet: MonthSheet = months[month] ?? { days: {} };
-  return {
-    ...months,
-    [month]: {
-      days: { ...sheet.days, [date]: update(sheet.days[date] ?? []) },
-    },
-  };
+  const prev = sheet.days[date] ?? [];
+  const next = update(prev);
+  // Same array back means nothing changed: keep the state reference so
+  // nothing re-renders or re-saves.
+  if (next === prev) return months;
+  return { ...months, [month]: { days: { ...sheet.days, [date]: next } } };
 }
 
 /**
@@ -90,17 +90,23 @@ function withDay(
 function removeOrMerge(entries: Entry[], index: number): Entry[] {
   const entry = entries[index];
   if (!entry) return entries;
-  const sibling = (i: number) =>
-    entries[i]?.employeeId === entry.employeeId ? i : -1;
-  const into = sibling(index - 1) >= 0 ? index - 1 : sibling(index + 1);
-  if (into < 0) return entries.filter((_, i) => i !== index);
-  const [first, second] =
-    into < index ? [entries[into], entry] : [entry, entries[into]];
-  const merged = mergeShifts(first, second);
-  if (!merged) return entries.filter((_, i) => i !== index);
-  return entries.flatMap((e, i) =>
-    i === index ? [] : i === into ? [{ ...e, ...merged }] : [e],
-  );
+  const isPart = (i: number) => entries[i]?.employeeId === entry.employeeId;
+  const into = isPart(index - 1)
+    ? index - 1
+    : isPart(index + 1)
+      ? index + 1
+      : -1;
+  const dropped = entries.filter((_, i) => i !== index);
+  if (into < 0) return dropped;
+  const merged =
+    into < index
+      ? mergeShifts(entries[into], entry)
+      : mergeShifts(entry, entries[into]);
+  if (!merged) return dropped;
+  return entries.flatMap((e, i) => {
+    if (i === index) return [];
+    return i === into ? [{ ...e, ...merged }] : [e];
+  });
 }
 
 export const useAttendanceStore = create<AttendanceState>()(
@@ -182,8 +188,8 @@ export const useAttendanceStore = create<AttendanceState>()(
       splitEntry: (month, date, index) =>
         set((s) => {
           const entry = s.months[month]?.days[date]?.[index];
-          const parts = entry && splitShift(entry);
-          if (!entry || !parts) return s;
+          const parts = entry ? splitShift(entry) : null;
+          if (!parts) return s;
           return {
             months: withDay(s.months, month, date, (entries) =>
               entries.flatMap((e, i) =>

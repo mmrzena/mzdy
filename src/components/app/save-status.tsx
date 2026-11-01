@@ -56,7 +56,7 @@ export function SaveStatus() {
           </span>
         </span>
       </TooltipTrigger>
-      <TooltipContent className="max-w-64">
+      <TooltipContent>
         {shown === "error"
           ? "Prohlížeč odmítl data uložit (plné nebo zablokované úložiště). Stáhněte si zálohu, aby se změny neztratily. Další změna zkusí uložit znovu."
           : `${lastSaved}Změny se ukládají do tohoto prohlížeče. Pro přenos na jiný počítač nebo jako pojistku si stáhněte zálohu.`}

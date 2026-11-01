@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { pad } from "./calendar";
+
 /** "HH:MM", 24-hour — the value a native `<input type="time">` produces. */
 export const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const time = z.string().regex(TIME_PATTERN);
@@ -192,14 +194,21 @@ export function shiftIssue(shift: Shift): string | null {
   return null;
 }
 
-/** 450 → "07:30" */
+/** 450 → "07:30", the inverse of minutes(). */
 function formatMinutes(total: number) {
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
 }
 
-const NO_BREAK = { breakStart: null, breakEnd: null } as const;
+type Break = Pick<Shift, "breakStart" | "breakEnd">;
+const NO_BREAK: Break = { breakStart: null, breakEnd: null };
+
+function breakOf(shift: Shift): Break {
+  return { breakStart: shift.breakStart, breakEnd: shift.breakEnd };
+}
+
+function hasBreak(shift: Shift) {
+  return shift.breakStart !== null && shift.breakEnd !== null;
+}
 
 /**
  * Cut a shift into two consecutive parts, so one of them can get another
@@ -217,6 +226,7 @@ export function splitShift(shift: Shift): [Shift, Shift] | null {
     shift.breakStart !== null && shift.breakEnd !== null
       ? { start: minutes(shift.breakStart), end: minutes(shift.breakEnd) }
       : null;
+  const keep = breakOf(shift);
 
   if (lunch && lunch.start > start && lunch.end < end) {
     return [
@@ -228,18 +238,11 @@ export function splitShift(shift: Shift): [Shift, Shift] | null {
   const mid = Math.round((start + end) / 2 / 5) * 5;
   if (mid <= start || mid >= end) return null;
   const cut = formatMinutes(mid);
-  const keep = { breakStart: shift.breakStart, breakEnd: shift.breakEnd };
+  const breakInFirst = lunch !== null && lunch.end <= mid;
+  const breakInSecond = lunch !== null && lunch.start >= mid;
   return [
-    {
-      start: shift.start,
-      end: cut,
-      ...(lunch && lunch.end <= mid ? keep : NO_BREAK),
-    },
-    {
-      start: cut,
-      end: shift.end,
-      ...(lunch && lunch.start >= mid ? keep : NO_BREAK),
-    },
+    { start: shift.start, end: cut, ...(breakInFirst ? keep : NO_BREAK) },
+    { start: cut, end: shift.end, ...(breakInSecond ? keep : NO_BREAK) },
   ];
 }
 
@@ -251,15 +254,20 @@ export function splitShift(shift: Shift): [Shift, Shift] | null {
  */
 export function mergeShifts(a: Shift, b: Shift): Shift | null {
   if (minutes(b.start) < minutes(a.end)) return null;
-  const kept = [a, b].find((p) => p.breakStart !== null && p.breakEnd !== null);
-  const gap = minutes(b.start) > minutes(a.end);
-  return {
-    start: a.start,
-    end: b.end,
-    ...(kept
-      ? { breakStart: kept.breakStart, breakEnd: kept.breakEnd }
-      : gap
-        ? { breakStart: a.end, breakEnd: b.start }
-        : NO_BREAK),
-  };
+  const kept = [a, b].find(hasBreak);
+  let lunch = NO_BREAK;
+  if (kept) lunch = breakOf(kept);
+  else if (minutes(b.start) > minutes(a.end)) {
+    lunch = { breakStart: a.end, breakEnd: b.start };
+  }
+  return { start: a.start, end: b.end, ...lunch };
+}
+
+/**
+ * Whether an entry's times mean anything: always when present, and for an
+ * absence only in a split day, where they say how long the absence was. The
+ * screen edits and the PDF prints times exactly when this holds.
+ */
+export function timesShown(entry: Pick<Entry, "status">, parts: number) {
+  return entry.status === "pritomen" || parts > 1;
 }

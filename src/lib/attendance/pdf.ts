@@ -26,7 +26,9 @@ import {
   type MonthSheet,
   NON_WORK_STATUSES,
   STATUS_SHORT,
+  timesShown,
 } from "./model";
+import { groupDayEntries } from "./prefill";
 import {
   formatDays,
   formatHours,
@@ -155,7 +157,7 @@ function entryCells(
 ): TableCell[] {
   const fill = employee ? FILL_BY_CONTRACT[employee.contract] : undefined;
   const present = entry.status === "pritomen";
-  const timed = present || parts > 1;
+  const timed = timesShown(entry, parts);
   const tag =
     employee && employee.contract !== "HPP"
       ? CONTRACT_LABEL[employee.contract].short
@@ -234,24 +236,12 @@ function dayBlock(
         : []),
     ],
   };
-  const parts = new Map<string, number>();
-  for (const e of entries) {
-    parts.set(e.employeeId, (parts.get(e.employeeId) ?? 0) + 1);
-  }
-  const seen = new Map<string, number>();
-  const body: TableCell[][] = entries.map((entry, i) => {
-    const part = (seen.get(entry.employeeId) ?? 0) + 1;
-    seen.set(entry.employeeId, part);
-    return [
-      i === 0 ? dayCell : {},
-      ...entryCells(
-        entry,
-        byId.get(entry.employeeId),
-        part,
-        parts.get(entry.employeeId) ?? 1,
-      ),
-    ];
-  });
+  const body: TableCell[][] = groupDayEntries(entries).flatMap((group) =>
+    group.rows.map(({ entry, index, part }) => [
+      index === 0 ? dayCell : {},
+      ...entryCells(entry, byId.get(group.employeeId), part, group.rows.length),
+    ]),
+  );
 
   return {
     unbreakable: true,

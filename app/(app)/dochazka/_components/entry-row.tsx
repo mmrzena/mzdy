@@ -25,6 +25,7 @@ import {
   type Status,
   shiftIssue,
   splitShift,
+  timesShown,
 } from "@/lib/attendance/model";
 import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
@@ -68,12 +69,18 @@ export const EntryRow = memo(function EntryRow({
     useAttendanceStore.getState();
   const present = entry.status === "pritomen";
   const split = parts > 1;
-  const timesEditable = present || split;
+  const timesEditable = timesShown(entry, parts);
   const issue = timesEditable ? shiftIssue(entry) : null;
   const name = employee?.name ?? "Neznámý zaměstnanec";
   const who = split ? `${name}, ${part}. část` : name;
   const update = (patch: Partial<Omit<Entry, "employeeId">>) =>
     updateEntry(month, date, index, patch);
+  const remove = split
+    ? {
+        tip: "Spojit se sousední částí – den bude zase vcelku",
+        label: `Spojit ${who} se sousední částí`,
+      }
+    : { tip: "Odebrat z tohoto dne", label: `Odebrat ${name} z tohoto dne` };
 
   return (
     <div className="-mx-2 grid gap-1 rounded-md px-2 py-1 transition-colors hover:bg-accent/50">
@@ -167,21 +174,11 @@ export const EntryRow = memo(function EntryRow({
               <RiScissorsLine />
             </Button>
           </Tip>
-          <Tip
-            label={
-              split
-                ? "Spojit se sousední částí – den bude zase vcelku"
-                : "Odebrat z tohoto dne"
-            }
-          >
+          <Tip label={remove.tip}>
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label={
-                split
-                  ? `Spojit ${who} se sousední částí`
-                  : `Odebrat ${name} z tohoto dne`
-              }
+              aria-label={remove.label}
               onClick={() => removeEntry(month, date, index)}
             >
               <RiCloseLine />

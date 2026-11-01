@@ -66,6 +66,26 @@ export function sortEntries(entries: Entry[], employees: Employee[]) {
   );
 }
 
+export type DayPart = { entry: Entry; index: number; part: number };
+export type DayGroup = { employeeId: string; rows: DayPart[] };
+
+/**
+ * A day's entries grouped per employee, parts numbered from 1. Entries are
+ * kept adjacent per employee (sortEntries), so one pass suffices.
+ */
+export function groupDayEntries(entries: Entry[]): DayGroup[] {
+  const groups: DayGroup[] = [];
+  entries.forEach((entry, index) => {
+    let group = groups.at(-1);
+    if (!group || group.employeeId !== entry.employeeId) {
+      group = { employeeId: entry.employeeId, rows: [] };
+      groups.push(group);
+    }
+    group.rows.push({ entry, index, part: group.rows.length + 1 });
+  });
+  return groups;
+}
+
 export type StatusRange = {
   employee: Employee;
   /** ISO dates, inclusive. */

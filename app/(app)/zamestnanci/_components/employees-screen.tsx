@@ -52,15 +52,14 @@ import {
 import { EmployeeDialog } from "./employee-dialog";
 import { weekSummary } from "./week-summary";
 
-type RowActions = {
-  employees: Employee[];
-  index: number;
+type MoveProps = { employee: Employee; index: number; count: number };
+type MenuProps = {
   employee: Employee;
   onEdit: (employee: Employee) => void;
   onDelete: (employee: Employee) => void;
 };
 
-function MoveButtons({ employees, index, employee }: RowActions) {
+function MoveButtons({ employee, index, count }: MoveProps) {
   const { moveEmployee } = useAttendanceStore.getState();
   return (
     <div className="flex">
@@ -80,7 +79,7 @@ function MoveButtons({ employees, index, employee }: RowActions) {
           variant="ghost"
           size="icon-sm"
           aria-label={`Posunout ${employee.name} dolů`}
-          disabled={index === employees.length - 1}
+          disabled={index === count - 1}
           onClick={() => moveEmployee(employee.id, 1)}
         >
           <RiArrowDownLine />
@@ -101,7 +100,7 @@ function ActiveSwitch({ employee }: { employee: Employee }) {
   );
 }
 
-function ActionsMenu({ employee, onEdit, onDelete }: RowActions) {
+function ActionsMenu({ employee, onEdit, onDelete }: MenuProps) {
   return (
     <DropdownMenu>
       <Tip label="Upravit nebo smazat">
@@ -131,7 +130,7 @@ function ActionsMenu({ employee, onEdit, onDelete }: RowActions) {
 }
 
 /** One employee as a card, for phones where the table would not fit. */
-function EmployeeCard(props: RowActions) {
+function EmployeeCard(props: MoveProps & MenuProps) {
   const { employee } = props;
   return (
     <li
@@ -220,9 +219,9 @@ export function EmployeesScreen() {
             {employees.map((employee, index) => (
               <EmployeeCard
                 key={employee.id}
-                employees={employees}
-                index={index}
                 employee={employee}
+                index={index}
+                count={employees.length}
                 onEdit={setEditing}
                 onDelete={requestDelete}
               />
@@ -254,11 +253,9 @@ export function EmployeesScreen() {
                 >
                   <TableCell>
                     <MoveButtons
-                      employees={employees}
-                      index={index}
                       employee={employee}
-                      onEdit={setEditing}
-                      onDelete={requestDelete}
+                      index={index}
+                      count={employees.length}
                     />
                   </TableCell>
                   <TableCell className="font-medium">{employee.name}</TableCell>
@@ -271,8 +268,6 @@ export function EmployeesScreen() {
                   </TableCell>
                   <TableCell>
                     <ActionsMenu
-                      employees={employees}
-                      index={index}
                       employee={employee}
                       onEdit={setEditing}
                       onDelete={requestDelete}

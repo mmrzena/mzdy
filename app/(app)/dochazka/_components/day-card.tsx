@@ -33,6 +33,7 @@ import {
   type Entry,
   shiftMinutes,
 } from "@/lib/attendance/model";
+import { type DayPart, groupDayEntries } from "@/lib/attendance/prefill";
 import { formatHours } from "@/lib/attendance/summary";
 import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
@@ -40,40 +41,26 @@ import { EntryRow, ROW_GRID } from "./entry-row";
 
 const NO_ENTRIES: Entry[] = [];
 
-type DayRow = { entry: Entry; index: number; part: number };
-
-type DayGroup = {
-  employeeId: string;
-  rows: DayRow[];
-  /** All parts' minutes when the day is split; null when a part is invalid. */
-  dayMinutes: number | null | undefined;
-};
-
-/**
- * The day's entries grouped per employee (they are kept adjacent), with the
- * parts numbered and, for a split day, the day's total hours.
- */
-function dayGroups(entries: Entry[]): DayGroup[] {
-  const groups: DayGroup[] = [];
-  entries.forEach((entry, index) => {
-    const last = groups.at(-1);
-    const group =
-      last && last.employeeId === entry.employeeId
-        ? last
-        : { employeeId: entry.employeeId, rows: [], dayMinutes: undefined };
-    if (group !== last) groups.push(group);
-    group.rows.push({ entry, index, part: group.rows.length + 1 });
-  });
-  for (const group of groups) {
-    if (group.rows.length < 2) continue;
-    let total: number | null = 0;
-    for (const { entry } of group.rows) {
-      const own = shiftMinutes(entry);
-      total = own === null || total === null ? null : total + own;
-    }
-    group.dayMinutes = total;
+/** All parts' working minutes, or null when any part is inconsistent. */
+function sumMinutes(rows: DayPart[]): number | null {
+  let total = 0;
+  for (const { entry } of rows) {
+    const own = shiftMinutes(entry);
+    if (own === null) return null;
+    total += own;
   }
-  return groups;
+  return total;
+}
+
+function DayTotal({ minutes }: { minutes: number | null }) {
+  return (
+    <p className="-mt-1 pl-3 text-xs text-muted-foreground">
+      Celkem za den
+      {minutes === null
+        ? ": některá část má neplatný čas"
+        : ` ${formatHours(minutes)} h`}
+    </p>
+  );
 }
 
 export const DayCard = memo(function DayCard({
@@ -102,7 +89,7 @@ export const DayCard = memo(function DayCard({
   const addable = employees.filter((e) => !present.has(e.id));
   const title = `${WEEKDAY_NAMES[day.weekdayIndex]} ${formatShortDate(day.date)}`;
   const isEmpty = entries.length === 0;
-  const groups = dayGroups(entries);
+  const groups = groupDayEntries(entries);
 
   return (
     <Card
@@ -122,7 +109,7 @@ export const DayCard = memo(function DayCard({
         {day.isWeekend ? <Badge variant="secondary">Víkend</Badge> : null}
         {!isEmpty ? (
           <span className="text-xs text-muted-foreground">
-            {plural(present.size, "osoba", "osoby", "osob")}
+            {plural(groups.length, "osoba", "osoby", "osob")}
           </span>
         ) : null}
 
@@ -200,7 +187,7 @@ export const DayCard = memo(function DayCard({
               <span>Přítomnost</span>
               <span />
             </div>
-            {groups.map(({ employeeId, rows, dayMinutes }) => (
+            {groups.map(({ employeeId, rows }) => (
               <div key={employeeId} className="grid gap-2 max-md:py-3">
                 {rows.map(({ entry, index, part }) => (
                   <EntryRow
@@ -214,13 +201,8 @@ export const DayCard = memo(function DayCard({
                     parts={rows.length}
                   />
                 ))}
-                {dayMinutes !== undefined ? (
-                  <p className="-mt-1 pl-3 text-xs text-muted-foreground">
-                    Celkem za den
-                    {dayMinutes === null
-                      ? ": některá část má neplatný čas"
-                      : ` ${formatHours(dayMinutes)} h`}
-                  </p>
+                {rows.length > 1 ? (
+                  <DayTotal minutes={sumMinutes(rows)} />
                 ) : null}
               </div>
             ))}
