@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/confirm-dialog";
+import { Tip } from "@/components/app/tip";
 import { PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -115,27 +116,29 @@ export function MonthScreen({ month }: { month: string }) {
 
   const monthNav = (
     <div className="flex items-center gap-1">
-      <Button
-        variant="outline"
-        size="icon-sm"
-        title="Předchozí měsíc"
-        aria-label="Předchozí měsíc"
-        onClick={() => goTo(-1)}
-      >
-        <RiArrowLeftSLine />
-      </Button>
+      <Tip label="Předchozí měsíc">
+        <Button
+          variant="outline"
+          size="icon-sm"
+          aria-label="Předchozí měsíc"
+          onClick={() => goTo(-1)}
+        >
+          <RiArrowLeftSLine />
+        </Button>
+      </Tip>
       <span className="min-w-36 text-center font-semibold capitalize">
         {formatMonth(month)}
       </span>
-      <Button
-        variant="outline"
-        size="icon-sm"
-        title="Další měsíc"
-        aria-label="Další měsíc"
-        onClick={() => goTo(1)}
-      >
-        <RiArrowRightSLine />
-      </Button>
+      <Tip label="Další měsíc">
+        <Button
+          variant="outline"
+          size="icon-sm"
+          aria-label="Další měsíc"
+          onClick={() => goTo(1)}
+        >
+          <RiArrowRightSLine />
+        </Button>
+      </Tip>
     </div>
   );
 
@@ -257,17 +260,18 @@ export function MonthScreen({ month }: { month: string }) {
                 <RiSuitcaseLine /> Zadat nepřítomnost
               </Button>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={!ready}
-                    title="Další akce s měsícem"
-                    aria-label="Další akce s měsícem"
-                  >
-                    <RiMore2Line />
-                  </Button>
-                </DropdownMenuTrigger>
+                <Tip label="Další akce s měsícem">
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={!ready}
+                      aria-label="Další akce s měsícem"
+                    >
+                      <RiMore2Line />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </Tip>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onSelect={() => setConfirm("refill")}>
                     <RiRefreshLine /> Předvyplnit znovu podle rozvrhů

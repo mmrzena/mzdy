@@ -7,7 +7,7 @@ import {
   RiRefreshLine,
 } from "@remixicon/react";
 import { memo } from "react";
-
+import { Tip } from "@/components/app/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -149,16 +149,17 @@ export const DayCard = memo(function DayCard({
             </NativeSelect>
           ) : null}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                title="Další akce s tímto dnem"
-                aria-label={`Akce pro ${title}`}
-              >
-                <RiMore2Line />
-              </Button>
-            </DropdownMenuTrigger>
+            <Tip label="Další akce s tímto dnem">
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Akce pro ${title}`}
+                >
+                  <RiMore2Line />
+                </Button>
+              </DropdownMenuTrigger>
+            </Tip>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => resetDay(month, day)}>
                 <RiRefreshLine /> Obnovit podle rozvrhů

@@ -10,6 +10,7 @@ import { memo } from "react";
 import { BreakInput } from "@/components/app/break-input";
 import { ContractBadge } from "@/components/app/contract-badge";
 import { TimeInput } from "@/components/app/time-input";
+import { Tip } from "@/components/app/tip";
 import { Button } from "@/components/ui/button";
 import {
   NativeSelect,
@@ -155,33 +156,37 @@ export const EntryRow = memo(function EntryRow({
           ))}
         </NativeSelect>
         <div className="flex items-center max-md:col-start-2 max-md:row-start-1 max-md:justify-self-end">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title="Rozdělit na dvě části – např. dopoledne práce, odpoledne dovolená"
-            aria-label={`Rozdělit ${who} na dvě části`}
-            disabled={splitShift(entry) === null}
-            onClick={() => splitEntry(month, date, index)}
-          >
-            <RiScissorsLine />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title={
+          <Tip label="Rozdělit na dvě části – např. dopoledne práce, odpoledne dovolená">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Rozdělit ${who} na dvě části`}
+              disabled={splitShift(entry) === null}
+              onClick={() => splitEntry(month, date, index)}
+            >
+              <RiScissorsLine />
+            </Button>
+          </Tip>
+          <Tip
+            label={
               split
                 ? "Spojit se sousední částí – den bude zase vcelku"
                 : "Odebrat z tohoto dne"
             }
-            aria-label={
-              split
-                ? `Spojit ${who} se sousední částí`
-                : `Odebrat ${name} z tohoto dne`
-            }
-            onClick={() => removeEntry(month, date, index)}
           >
-            <RiCloseLine />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={
+                split
+                  ? `Spojit ${who} se sousední částí`
+                  : `Odebrat ${name} z tohoto dne`
+              }
+              onClick={() => removeEntry(month, date, index)}
+            >
+              <RiCloseLine />
+            </Button>
+          </Tip>
         </div>
       </div>
       {issue ? <p className="text-xs text-destructive">{issue}</p> : null}

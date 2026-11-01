@@ -3,6 +3,7 @@
 import { RiAddLine, RiCloseLine } from "@remixicon/react";
 
 import { TimeInput } from "@/components/app/time-input";
+import { Tip } from "@/components/app/tip";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_BREAK } from "@/lib/attendance/model";
 
@@ -30,19 +31,20 @@ export function BreakInput({
     return (
       <div className="flex h-8 items-center gap-2">
         <span className="text-sm text-muted-foreground">Bez pauzy</span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          disabled={disabled}
-          title="Přidat obědovou pauzu 12:00–12:30 – nepočítá se do odpracovaných hodin"
-          aria-label={`${label}: přidat obědovou pauzu`}
-          onClick={() =>
-            onChange(DEFAULT_BREAK.breakStart, DEFAULT_BREAK.breakEnd)
-          }
-        >
-          <RiAddLine /> Přidat
-        </Button>
+        <Tip label="Přidat obědovou pauzu 12:00–12:30 – nepočítá se do odpracovaných hodin">
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            disabled={disabled}
+            aria-label={`${label}: přidat obědovou pauzu`}
+            onClick={() =>
+              onChange(DEFAULT_BREAK.breakStart, DEFAULT_BREAK.breakEnd)
+            }
+          >
+            <RiAddLine /> Přidat
+          </Button>
+        </Tip>
       </div>
     );
   }
@@ -62,17 +64,18 @@ export function BreakInput({
         disabled={disabled}
         aria-label={`${label} pauza do`}
       />
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        disabled={disabled}
-        title="Zrušit obědovou pauzu – celá doba se počítá jako odpracovaná"
-        aria-label={`${label}: zrušit obědovou pauzu`}
-        onClick={() => onChange(null, null)}
-      >
-        <RiCloseLine />
-      </Button>
+      <Tip label="Zrušit obědovou pauzu – celá doba se počítá jako odpracovaná">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={disabled}
+          aria-label={`${label}: zrušit obědovou pauzu`}
+          onClick={() => onChange(null, null)}
+        >
+          <RiCloseLine />
+        </Button>
+      </Tip>
     </div>
   );
 }

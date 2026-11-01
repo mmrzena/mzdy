@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/confirm-dialog";
 import { ContractBadge } from "@/components/app/contract-badge";
+import { Tip } from "@/components/app/tip";
 import { PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -63,26 +64,28 @@ function MoveButtons({ employees, index, employee }: RowActions) {
   const { moveEmployee } = useAttendanceStore.getState();
   return (
     <div className="flex">
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        title="Posunout nahoru – pořadí platí i v docházce"
-        aria-label={`Posunout ${employee.name} nahoru`}
-        disabled={index === 0}
-        onClick={() => moveEmployee(employee.id, -1)}
-      >
-        <RiArrowUpLine />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        title="Posunout dolů – pořadí platí i v docházce"
-        aria-label={`Posunout ${employee.name} dolů`}
-        disabled={index === employees.length - 1}
-        onClick={() => moveEmployee(employee.id, 1)}
-      >
-        <RiArrowDownLine />
-      </Button>
+      <Tip label="Posunout nahoru – pořadí platí i v docházce">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Posunout ${employee.name} nahoru`}
+          disabled={index === 0}
+          onClick={() => moveEmployee(employee.id, -1)}
+        >
+          <RiArrowUpLine />
+        </Button>
+      </Tip>
+      <Tip label="Posunout dolů – pořadí platí i v docházce">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Posunout ${employee.name} dolů`}
+          disabled={index === employees.length - 1}
+          onClick={() => moveEmployee(employee.id, 1)}
+        >
+          <RiArrowDownLine />
+        </Button>
+      </Tip>
     </div>
   );
 }
@@ -101,16 +104,17 @@ function ActiveSwitch({ employee }: { employee: Employee }) {
 function ActionsMenu({ employee, onEdit, onDelete }: RowActions) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          title="Upravit nebo smazat"
-          aria-label={`Akce pro ${employee.name}`}
-        >
-          <RiMore2Line />
-        </Button>
-      </DropdownMenuTrigger>
+      <Tip label="Upravit nebo smazat">
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Akce pro ${employee.name}`}
+          >
+            <RiMore2Line />
+          </Button>
+        </DropdownMenuTrigger>
+      </Tip>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onSelect={() => onEdit(employee)}>
           <RiPencilLine /> Upravit
