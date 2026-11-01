@@ -111,9 +111,14 @@ export function MonthSummaryTable({ month }: { month: string }) {
               {summary.rows.map(({ employee, totals }) => (
                 <TableRow
                   key={employee.id}
-                  className={cn(!employee.active && "text-muted-foreground")}
+                  className={cn(
+                    "group hover:bg-accent",
+                    !employee.active && "text-muted-foreground",
+                  )}
                 >
-                  <TableCell className="sticky left-0 z-10 bg-card">
+                  {/* Pinned, so it paints its own background and must
+                      follow the row's hover. */}
+                  <TableCell className="sticky left-0 z-10 bg-card transition-colors group-hover:bg-accent">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{employee.name}</span>
                       <ContractBadge contract={employee.contract} />
