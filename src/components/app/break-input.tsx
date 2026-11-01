@@ -35,6 +35,7 @@ export function BreakInput({
           variant="ghost"
           size="xs"
           disabled={disabled}
+          title="Přidat obědovou pauzu 12:00–12:30 – nepočítá se do odpracovaných hodin"
           aria-label={`${label}: přidat obědovou pauzu`}
           onClick={() =>
             onChange(DEFAULT_BREAK.breakStart, DEFAULT_BREAK.breakEnd)
@@ -66,8 +67,8 @@ export function BreakInput({
         variant="ghost"
         size="icon-xs"
         disabled={disabled}
-        title="Bez pauzy"
-        aria-label={`${label}: bez obědové pauzy`}
+        title="Zrušit obědovou pauzu – celá doba se počítá jako odpracovaná"
+        aria-label={`${label}: zrušit obědovou pauzu`}
         onClick={() => onChange(null, null)}
       >
         <RiCloseLine />

@@ -66,6 +66,7 @@ function MoveButtons({ employees, index, employee }: RowActions) {
       <Button
         variant="ghost"
         size="icon-sm"
+        title="Posunout nahoru – pořadí platí i v docházce"
         aria-label={`Posunout ${employee.name} nahoru`}
         disabled={index === 0}
         onClick={() => moveEmployee(employee.id, -1)}
@@ -75,6 +76,7 @@ function MoveButtons({ employees, index, employee }: RowActions) {
       <Button
         variant="ghost"
         size="icon-sm"
+        title="Posunout dolů – pořadí platí i v docházce"
         aria-label={`Posunout ${employee.name} dolů`}
         disabled={index === employees.length - 1}
         onClick={() => moveEmployee(employee.id, 1)}
@@ -103,6 +105,7 @@ function ActionsMenu({ employee, onEdit, onDelete }: RowActions) {
         <Button
           variant="ghost"
           size="icon-sm"
+          title="Upravit nebo smazat"
           aria-label={`Akce pro ${employee.name}`}
         >
           <RiMore2Line />

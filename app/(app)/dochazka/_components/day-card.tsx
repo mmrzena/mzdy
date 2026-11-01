@@ -153,6 +153,7 @@ export const DayCard = memo(function DayCard({
               <Button
                 variant="ghost"
                 size="icon-sm"
+                title="Další akce s tímto dnem"
                 aria-label={`Akce pro ${title}`}
               >
                 <RiMore2Line />

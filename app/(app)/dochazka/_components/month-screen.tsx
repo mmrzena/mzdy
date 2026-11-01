@@ -118,6 +118,7 @@ export function MonthScreen({ month }: { month: string }) {
       <Button
         variant="outline"
         size="icon-sm"
+        title="Předchozí měsíc"
         aria-label="Předchozí měsíc"
         onClick={() => goTo(-1)}
       >
@@ -129,6 +130,7 @@ export function MonthScreen({ month }: { month: string }) {
       <Button
         variant="outline"
         size="icon-sm"
+        title="Další měsíc"
         aria-label="Další měsíc"
         onClick={() => goTo(1)}
       >
@@ -260,6 +262,7 @@ export function MonthScreen({ month }: { month: string }) {
                     variant="ghost"
                     size="icon"
                     disabled={!ready}
+                    title="Další akce s měsícem"
                     aria-label="Další akce s měsícem"
                   >
                     <RiMore2Line />
