@@ -1,6 +1,10 @@
 "use client";
 
-import { RiCloseLine } from "@remixicon/react";
+import {
+  RiCloseLine,
+  RiCornerDownRightLine,
+  RiScissorsLine,
+} from "@remixicon/react";
 import { memo } from "react";
 
 import { BreakInput } from "@/components/app/break-input";
@@ -19,74 +23,105 @@ import {
   STATUSES,
   type Status,
   shiftIssue,
+  splitShift,
 } from "@/lib/attendance/model";
 import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
 
 export const ROW_GRID =
-  "grid grid-cols-[minmax(10rem,1fr)_6.5rem_6.5rem_15.5rem_9.5rem_2rem] items-center gap-2";
+  "grid grid-cols-[minmax(10rem,1fr)_6.5rem_6.5rem_15.5rem_9.5rem_4.25rem] items-center gap-2";
 
+/**
+ * One entry of a day. When the employee's day is split, `part` / `parts` say
+ * which part this is; the parts after the first show a marker instead of the
+ * name, and times stay editable even for an absence, because then they say
+ * how long the absence was.
+ */
 export const EntryRow = memo(function EntryRow({
   month,
   date,
+  index,
   entry,
   employee,
+  part,
+  parts,
 }: {
   month: string;
   date: string;
+  /** Position in the day's entries, which is how the store addresses it. */
+  index: number;
   entry: Entry;
   employee: Employee | undefined;
+  /** 1-based position among this employee's entries of the day. */
+  part: number;
+  parts: number;
 }) {
-  const { updateEntry, removeEntry } = useAttendanceStore.getState();
+  const { updateEntry, removeEntry, splitEntry } =
+    useAttendanceStore.getState();
   const present = entry.status === "pritomen";
-  const issue = present ? shiftIssue(entry) : null;
+  const split = parts > 1;
+  const timesEditable = present || split;
+  const issue = timesEditable ? shiftIssue(entry) : null;
   const name = employee?.name ?? "Neznámý zaměstnanec";
+  const who = split ? `${name}, ${part}. část` : name;
   const update = (patch: Partial<Omit<Entry, "employeeId">>) =>
-    updateEntry(month, date, entry.employeeId, patch);
+    updateEntry(month, date, index, patch);
 
   return (
     <div className="grid gap-1">
       <div className={ROW_GRID}>
         <div className="flex min-w-0 items-center gap-2">
-          <span
-            className={cn(
-              "truncate text-sm font-medium",
-              !present && "text-muted-foreground",
-            )}
-          >
-            {name}
-          </span>
-          {employee && employee.contract !== "HPP" ? (
-            <ContractBadge contract={employee.contract} className="shrink-0" />
-          ) : null}
+          {part > 1 ? (
+            <span className="flex items-center gap-1 pl-3 text-sm text-muted-foreground">
+              <RiCornerDownRightLine className="size-4" aria-hidden="true" />
+              {part}. část
+            </span>
+          ) : (
+            <>
+              <span
+                className={cn(
+                  "truncate text-sm font-medium",
+                  !present && !split && "text-muted-foreground",
+                )}
+              >
+                {name}
+              </span>
+              {employee && employee.contract !== "HPP" ? (
+                <ContractBadge
+                  contract={employee.contract}
+                  className="shrink-0"
+                />
+              ) : null}
+            </>
+          )}
         </div>
         <TimeInput
           required
           value={entry.start}
           onChange={(start) => start && update({ start })}
-          disabled={!present}
+          disabled={!timesEditable}
           invalid={Boolean(issue)}
-          aria-label={`${name} od`}
+          aria-label={`${who} od`}
         />
         <TimeInput
           required
           value={entry.end}
           onChange={(end) => end && update({ end })}
-          disabled={!present}
+          disabled={!timesEditable}
           invalid={Boolean(issue)}
-          aria-label={`${name} do`}
+          aria-label={`${who} do`}
         />
         <BreakInput
           breakStart={entry.breakStart}
           breakEnd={entry.breakEnd}
           onChange={(breakStart, breakEnd) => update({ breakStart, breakEnd })}
-          disabled={!present}
-          label={name}
+          disabled={!timesEditable}
+          label={who}
         />
         <NativeSelect
           size="sm"
           value={entry.status}
-          aria-label={`${name} přítomnost`}
+          aria-label={`${who} přítomnost`}
           title={STATUS_LABEL[entry.status]}
           className={cn(
             "w-[9.5rem]",
@@ -100,14 +135,28 @@ export const EntryRow = memo(function EntryRow({
             </NativeSelectOption>
           ))}
         </NativeSelect>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`Odebrat ${name} z tohoto dne`}
-          onClick={() => removeEntry(month, date, entry.employeeId)}
-        >
-          <RiCloseLine />
-        </Button>
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Rozdělit na dvě části (např. půl dne dovolená)"
+            aria-label={`Rozdělit ${who} na dvě části`}
+            disabled={splitShift(entry) === null}
+            onClick={() => splitEntry(month, date, index)}
+          >
+            <RiScissorsLine />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={
+              split ? `Odebrat ${who}` : `Odebrat ${name} z tohoto dne`
+            }
+            onClick={() => removeEntry(month, date, index)}
+          >
+            <RiCloseLine />
+          </Button>
+        </div>
       </div>
       {issue ? <p className="text-xs text-destructive">{issue}</p> : null}
     </div>

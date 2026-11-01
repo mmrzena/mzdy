@@ -53,7 +53,10 @@ export function manualEntry(employee: Employee, day: CalendarDay): Entry {
   return entryFor(employee, shift, day);
 }
 
-/** Keep a day's entries in the employee-list order. */
+/**
+ * Keep a day's entries in the employee-list order. The sort is stable, so the
+ * parts of a split day stay in the order they were cut.
+ */
 export function sortEntries(entries: Entry[], employees: Employee[]) {
   const order = new Map(employees.map((e, i) => [e.id, i]));
   return [...entries].sort(
@@ -73,8 +76,9 @@ export type StatusRange = {
 
 /**
  * Mark an employee with a status on every day of the range where they work:
- * an existing entry gets the new status, and a day their template covers but
- * that has no entry yet gains one. Public holidays keep "svátek".
+ * existing entries (every part of a split day) get the new status, and a day
+ * their template covers but that has no entry yet gains one. Public holidays
+ * keep "svátek".
  */
 export function applyStatusRange(
   sheet: MonthSheet,
@@ -86,10 +90,9 @@ export function applyStatusRange(
   for (const day of days) {
     if (day.date < from || day.date > to || day.holiday) continue;
     const entries = next.days[day.date] ?? [];
-    const index = entries.findIndex((e) => e.employeeId === employee.id);
-    if (index >= 0) {
-      next.days[day.date] = entries.map((e, i) =>
-        i === index ? { ...e, status } : e,
+    if (entries.some((e) => e.employeeId === employee.id)) {
+      next.days[day.date] = entries.map((e) =>
+        e.employeeId === employee.id ? { ...e, status } : e,
       );
       continue;
     }

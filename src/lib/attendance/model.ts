@@ -81,8 +81,10 @@ export const STATUS_SHORT: Record<Status, string> = {
 };
 
 /**
- * One employee on one day. Times are kept even when the status is an absence
- * so switching back to "přítomen" restores them.
+ * One employee on one day, or one part of their day: a day can be split into
+ * several entries for the same employee (e.g. morning worked, afternoon
+ * vacation), each with its own times and status. Times are kept even when the
+ * status is an absence so switching back to "přítomen" restores them.
  */
 export const entrySchema = shiftSchema.extend({
   employeeId: z.string().min(1),
@@ -188,4 +190,55 @@ export function shiftIssue(shift: Shift): string | null {
     }
   }
   return null;
+}
+
+/** 450 → "07:30" */
+function formatMinutes(total: number) {
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+const NO_BREAK = { breakStart: null, breakEnd: null } as const;
+
+/**
+ * Cut a shift into two consecutive parts, so one of them can get another
+ * status (half a day of vacation). A lunch break inside the shift is the
+ * natural cut: the parts end before and start after it, which keeps their
+ * hours adding up to the whole shift. Without one the shift is cut at its
+ * midpoint (to 5 minutes) and the break, if any, stays with the part that
+ * contains it. Null when the shift is inconsistent or too short to cut.
+ */
+export function splitShift(shift: Shift): [Shift, Shift] | null {
+  if (shiftIssue(shift)) return null;
+  const start = minutes(shift.start);
+  const end = minutes(shift.end);
+  const lunch =
+    shift.breakStart !== null && shift.breakEnd !== null
+      ? { start: minutes(shift.breakStart), end: minutes(shift.breakEnd) }
+      : null;
+
+  if (lunch && lunch.start > start && lunch.end < end) {
+    return [
+      { start: shift.start, end: formatMinutes(lunch.start), ...NO_BREAK },
+      { start: formatMinutes(lunch.end), end: shift.end, ...NO_BREAK },
+    ];
+  }
+
+  const mid = Math.round((start + end) / 2 / 5) * 5;
+  if (mid <= start || mid >= end) return null;
+  const cut = formatMinutes(mid);
+  const keep = { breakStart: shift.breakStart, breakEnd: shift.breakEnd };
+  return [
+    {
+      start: shift.start,
+      end: cut,
+      ...(lunch && lunch.end <= mid ? keep : NO_BREAK),
+    },
+    {
+      start: cut,
+      end: shift.end,
+      ...(lunch && lunch.start >= mid ? keep : NO_BREAK),
+    },
+  ];
 }

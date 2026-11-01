@@ -23,7 +23,11 @@ database, auth, API route, or worker yet; all data lives in the browser.
   Czech public holidays incl. Easter), `prefill.ts` (month/day prefill,
   status ranges).
   `summary.ts` computes days/hours per employee and status (hours = end −
-  start − lunch break, § 88 ZP; absences count the planned shift).
+  start − lunch break, § 88 ZP; absences count the planned shift). A day
+  can hold several entries for one employee (a split day: morning worked,
+  afternoon vacation); `splitShift` in `model.ts` cuts a shift at its lunch
+  break, the store addresses entries by their index in the day, and a split
+  day counts once in the days of each status it contains.
   `pdf.ts` builds the month PDF (pdfmake, A4 portrait, brand styling; the
   last page is the hours summary;
   same colour meaning as the clinic's Word sheet); pdfmake + fonts load only

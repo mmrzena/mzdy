@@ -81,3 +81,23 @@ test("hours use Czech decimals", () => {
   assert.equal(formatHours(465), "7,75");
   assert.equal(formatHours(480), "8");
 });
+
+test("a split day counts once in days and part by part in hours", () => {
+  const sheet = prefillMonth(days, employees);
+  const entry = sheet.days["2026-09-01"][0]; // Tue 7:00–16:00, break 12–12:30
+  sheet.days["2026-09-01"] = [
+    { ...entry, end: "12:00", breakStart: null, breakEnd: null },
+    {
+      ...entry,
+      start: "12:30",
+      breakStart: null,
+      breakEnd: null,
+      status: "dovolena",
+    },
+  ];
+  const { rows, total } = summarizeMonth(sheet, employees);
+  assert.deepEqual(rows[0].totals.pritomen, { days: 21, minutes: 163.5 * 60 });
+  assert.deepEqual(rows[0].totals.dovolena, { days: 1, minutes: 3.5 * 60 });
+  assert.equal(total.pritomen.days, 21);
+  assert.equal(total.dovolena.days, 1);
+});

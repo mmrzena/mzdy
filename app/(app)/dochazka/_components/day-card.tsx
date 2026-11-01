@@ -6,7 +6,7 @@ import {
   RiMore2Line,
   RiRefreshLine,
 } from "@remixicon/react";
-import { memo } from "react";
+import { Fragment, memo } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,12 +28,55 @@ import {
   plural,
   WEEKDAY_NAMES,
 } from "@/lib/attendance/calendar";
-import type { Employee, Entry } from "@/lib/attendance/model";
+import {
+  type Employee,
+  type Entry,
+  shiftMinutes,
+} from "@/lib/attendance/model";
+import { formatHours } from "@/lib/attendance/summary";
 import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
 import { EntryRow, ROW_GRID } from "./entry-row";
 
 const NO_ENTRIES: Entry[] = [];
+
+type DayRow = {
+  entry: Entry;
+  index: number;
+  part: number;
+  parts: number;
+  /** Set on the last part of a split day: all parts' minutes, null if any is invalid. */
+  dayMinutes?: number | null;
+};
+
+/**
+ * Number the parts of each employee's day (entries are kept grouped by
+ * employee) and give the last part of a split day the day's total hours.
+ */
+function dayRows(entries: Entry[]): DayRow[] {
+  const parts = new Map<string, number>();
+  for (const e of entries) {
+    parts.set(e.employeeId, (parts.get(e.employeeId) ?? 0) + 1);
+  }
+  const seen = new Map<string, number>();
+  const minutes = new Map<string, number | null>();
+  return entries.map((entry, index) => {
+    const part = (seen.get(entry.employeeId) ?? 0) + 1;
+    seen.set(entry.employeeId, part);
+    const count = parts.get(entry.employeeId) ?? 1;
+    const own = shiftMinutes(entry);
+    const soFar = minutes.get(entry.employeeId);
+    const total = own === null || soFar === null ? null : (soFar ?? 0) + own;
+    minutes.set(entry.employeeId, total);
+    return {
+      entry,
+      index,
+      part,
+      parts: count,
+      dayMinutes: count > 1 && part === count ? total : undefined,
+    };
+  });
+}
 
 export const DayCard = memo(function DayCard({
   month,
@@ -61,6 +104,7 @@ export const DayCard = memo(function DayCard({
   const addable = employees.filter((e) => !present.has(e.id));
   const title = `${WEEKDAY_NAMES[day.weekdayIndex]} ${formatShortDate(day.date)}`;
   const isEmpty = entries.length === 0;
+  const rows = dayRows(entries);
 
   return (
     <Card
@@ -80,7 +124,7 @@ export const DayCard = memo(function DayCard({
         {day.isWeekend ? <Badge variant="secondary">Víkend</Badge> : null}
         {!isEmpty ? (
           <span className="text-xs text-muted-foreground">
-            {plural(entries.length, "osoba", "osoby", "osob")}
+            {plural(present.size, "osoba", "osoby", "osob")}
           </span>
         ) : null}
 
@@ -153,14 +197,26 @@ export const DayCard = memo(function DayCard({
               <span>Přítomnost</span>
               <span />
             </div>
-            {entries.map((entry) => (
-              <EntryRow
-                key={entry.employeeId}
-                month={month}
-                date={day.date}
-                entry={entry}
-                employee={byId.get(entry.employeeId)}
-              />
+            {rows.map(({ entry, index, part, parts, dayMinutes }) => (
+              <Fragment key={`${entry.employeeId}:${part}`}>
+                <EntryRow
+                  month={month}
+                  date={day.date}
+                  index={index}
+                  entry={entry}
+                  employee={byId.get(entry.employeeId)}
+                  part={part}
+                  parts={parts}
+                />
+                {dayMinutes !== undefined ? (
+                  <p className="-mt-1 pl-3 text-xs text-muted-foreground">
+                    Celkem za den
+                    {dayMinutes === null
+                      ? ": některá část má neplatný čas"
+                      : ` ${formatHours(dayMinutes)} h`}
+                  </p>
+                ) : null}
+              </Fragment>
             ))}
           </div>
         </div>

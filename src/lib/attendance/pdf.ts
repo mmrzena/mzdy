@@ -142,9 +142,20 @@ function columnHeader(): Content {
   };
 }
 
-function entryCells(entry: Entry, employee: Employee | undefined): TableCell[] {
+/**
+ * `part` is which part of a split day this is (1-based) and `parts` how many
+ * there are; parts after the first are marked instead of repeating the name,
+ * and an absence in a split day shows its times, which say how long it was.
+ */
+function entryCells(
+  entry: Entry,
+  employee: Employee | undefined,
+  part: number,
+  parts: number,
+): TableCell[] {
   const fill = employee ? FILL_BY_CONTRACT[employee.contract] : undefined;
   const present = entry.status === "pritomen";
+  const timed = present || parts > 1;
   const tag =
     employee && employee.contract !== "HPP"
       ? CONTRACT_LABEL[employee.contract].short
@@ -156,19 +167,29 @@ function entryCells(entry: Entry, employee: Employee | undefined): TableCell[] {
       ? `${sheetTime(entry.breakStart)} – ${sheetTime(entry.breakEnd)}`
       : null;
 
+  const nameCell: TableCell =
+    part > 1
+      ? {
+          fillColor: fill,
+          text: `${part}. část`,
+          color: C.muted,
+          italics: true,
+        }
+      : {
+          fillColor: fill,
+          text: [
+            { text: employee?.name ?? "Neznámý zaměstnanec", color: C.ink },
+            ...(tag
+              ? [{ text: `  ${tag}`, fontSize: 7, bold: true, color: C.slate }]
+              : []),
+          ],
+        };
+
   return [
-    {
-      fillColor: fill,
-      text: [
-        { text: employee?.name ?? "Neznámý zaměstnanec", color: C.ink },
-        ...(tag
-          ? [{ text: `  ${tag}`, fontSize: 7, bold: true, color: C.slate }]
-          : []),
-      ],
-    },
-    present ? { text: sheetTime(entry.start), fillColor: fill } : dash(),
-    present ? { text: sheetTime(entry.end), fillColor: fill } : dash(),
-    present && brk ? { text: brk, fillColor: fill } : dash(),
+    nameCell,
+    timed ? { text: sheetTime(entry.start), fillColor: fill } : dash(),
+    timed ? { text: sheetTime(entry.end), fillColor: fill } : dash(),
+    timed && brk ? { text: brk, fillColor: fill } : dash(),
     present
       ? { text: statusText(entry.status), color: C.slate, fillColor: fill }
       : {
@@ -213,10 +234,24 @@ function dayBlock(
         : []),
     ],
   };
-  const body: TableCell[][] = entries.map((entry, i) => [
-    i === 0 ? dayCell : {},
-    ...entryCells(entry, byId.get(entry.employeeId)),
-  ]);
+  const parts = new Map<string, number>();
+  for (const e of entries) {
+    parts.set(e.employeeId, (parts.get(e.employeeId) ?? 0) + 1);
+  }
+  const seen = new Map<string, number>();
+  const body: TableCell[][] = entries.map((entry, i) => {
+    const part = (seen.get(entry.employeeId) ?? 0) + 1;
+    seen.set(entry.employeeId, part);
+    return [
+      i === 0 ? dayCell : {},
+      ...entryCells(
+        entry,
+        byId.get(entry.employeeId),
+        part,
+        parts.get(entry.employeeId) ?? 1,
+      ),
+    ];
+  });
 
   return {
     unbreakable: true,

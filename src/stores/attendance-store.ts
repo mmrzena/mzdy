@@ -3,11 +3,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { type CalendarDay, monthDays } from "@/lib/attendance/calendar";
-import type {
-  AttendanceData,
-  Employee,
-  Entry,
-  MonthSheet,
+import {
+  type AttendanceData,
+  type Employee,
+  type Entry,
+  type MonthSheet,
+  splitShift,
 } from "@/lib/attendance/model";
 import {
   applyStatusRange,
@@ -40,14 +41,18 @@ type AttendanceState = AttendanceData & {
   startEmptyMonth: (month: string) => void;
   clearMonth: (month: string) => void;
 
+  /** Entries are addressed by their index in the day, as a day can hold
+   *  several parts for one employee. */
   updateEntry: (
     month: string,
     date: string,
-    employeeId: string,
+    index: number,
     patch: Partial<Omit<Entry, "employeeId">>,
   ) => void;
   addEntry: (month: string, day: CalendarDay, employeeId: string) => void;
-  removeEntry: (month: string, date: string, employeeId: string) => void;
+  removeEntry: (month: string, date: string, index: number) => void;
+  /** Cut an entry into two parts (see splitShift); no-op when it can't be. */
+  splitEntry: (month: string, date: string, index: number) => void;
   resetDay: (month: string, day: CalendarDay) => void;
   copyDay: (month: string, date: string, fromDate: string) => void;
   clearDay: (month: string, date: string) => void;
@@ -123,12 +128,10 @@ export const useAttendanceStore = create<AttendanceState>()(
           return { months };
         }),
 
-      updateEntry: (month, date, employeeId, patch) =>
+      updateEntry: (month, date, index, patch) =>
         set((s) => ({
           months: withDay(s.months, month, date, (entries) =>
-            entries.map((e) =>
-              e.employeeId === employeeId ? { ...e, ...patch } : e,
-            ),
+            entries.map((e, i) => (i === index ? { ...e, ...patch } : e)),
           ),
         })),
       addEntry: (month, day, employeeId) =>
@@ -146,12 +149,25 @@ export const useAttendanceStore = create<AttendanceState>()(
             ),
           };
         }),
-      removeEntry: (month, date, employeeId) =>
+      removeEntry: (month, date, index) =>
         set((s) => ({
           months: withDay(s.months, month, date, (entries) =>
-            entries.filter((e) => e.employeeId !== employeeId),
+            entries.filter((_, i) => i !== index),
           ),
         })),
+      splitEntry: (month, date, index) =>
+        set((s) => {
+          const entry = s.months[month]?.days[date]?.[index];
+          const parts = entry && splitShift(entry);
+          if (!entry || !parts) return s;
+          return {
+            months: withDay(s.months, month, date, (entries) =>
+              entries.flatMap((e, i) =>
+                i === index ? parts.map((part) => ({ ...e, ...part })) : [e],
+              ),
+            ),
+          };
+        }),
       resetDay: (month, day) =>
         set((s) => ({
           months: withDay(s.months, month, day.date, () =>

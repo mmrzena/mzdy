@@ -32,7 +32,8 @@ function emptyTotals(): StatusTotals {
 /**
  * Days and hours per status for each employee. Absences and holidays count
  * the hours of the shift planned for that day, which is how vacation is
- * accounted in hours.
+ * accounted in hours. A day split into several parts counts once in the days
+ * of every status it contains, and its hours part by part.
  */
 export function summarizeMonth(
   sheet: MonthSheet,
@@ -43,6 +44,8 @@ export function summarizeMonth(
   let invalid = 0;
 
   for (const entries of Object.values(sheet.days)) {
+    /** "employeeId:status" pairs already counted as a day today. */
+    const counted = new Set<string>();
     for (const entry of entries) {
       let totals = byEmployee.get(entry.employeeId);
       if (!totals) {
@@ -51,8 +54,11 @@ export function summarizeMonth(
       }
       const minutes = shiftMinutes(entry);
       if (minutes === null) invalid++;
+      const key = `${entry.employeeId}:${entry.status}`;
+      const newDay = !counted.has(key);
+      counted.add(key);
       for (const tally of [totals[entry.status], total[entry.status]]) {
-        tally.days++;
+        if (newDay) tally.days++;
         tally.minutes += minutes ?? 0;
       }
     }
@@ -81,4 +87,4 @@ export function formatDays(days: number) {
 
 /** How the hours are counted; shown under the summary on screen and in the PDF. */
 export const HOURS_NOTE =
-  "Odpracované hodiny = konec − začátek − obědová pauza. Pauza na jídlo a oddech se do pracovní doby nezapočítává (§ 88 zákoníku práce). Nepřítomnosti a svátky jsou v hodinách podle směny plánované na daný den.";
+  "Odpracované hodiny = konec − začátek − obědová pauza. Pauza na jídlo a oddech se do pracovní doby nezapočítává (§ 88 zákoníku práce). Nepřítomnosti a svátky jsou v hodinách podle směny plánované na daný den. Rozdělený den (např. dopoledne práce, odpoledne dovolená) se počítá po částech.";

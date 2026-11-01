@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { monthDays } from "./calendar";
-import { CLINIC_WEEK, EMPTY_WEEK, type Employee } from "./model";
+import { CLINIC_WEEK, EMPTY_WEEK, type Employee, splitShift } from "./model";
 import { attendancePdf, sheetTime } from "./pdf";
 import { applyStatusRange, manualEntry, prefillMonth } from "./prefill";
 
@@ -46,6 +46,14 @@ function build() {
     status: "dovolena",
   });
   sheet.days["2026-09-19"] = [manualEntry(dpp, days[18])];
+  // Thu 3rd: the doctor works the morning and takes the afternoon off.
+  const [third, ...others] = sheet.days["2026-09-03"];
+  const [morning, afternoon] = splitShift(third) ?? [];
+  sheet.days["2026-09-03"] = [
+    { ...third, ...morning },
+    { ...third, ...afternoon, status: "dovolena" },
+    ...others,
+  ];
   const doc = attendancePdf("2026-09", sheet, employees);
   const blocks = (doc.content as unknown as Block[]).slice(0, -1);
   return { doc, blocks };
@@ -84,6 +92,28 @@ test("rows carry day, times, contract tint and absences", () => {
   const vacation = blocks[1].table.body[0];
   assert.deepEqual(vacation.slice(2).map(plain), ["—", "—", "—", "Dovolená"]);
   assert.equal(vacation[5].fillColor, "#fdecef");
+});
+
+test("a split day marks its parts and keeps the absence's times", () => {
+  const { blocks } = build();
+  const rows = blocks[2].table.body;
+  assert.equal(rows[0][0].rowSpan, 3);
+  assert.deepEqual(rows[0].slice(1).map(plain), [
+    "MUDr. Řehoř Čížek",
+    "7:45",
+    "12:00",
+    "—",
+    "ano",
+  ]);
+  assert.deepEqual(rows[1].slice(1).map(plain), [
+    "2. část",
+    "12:30",
+    "15:15",
+    "—",
+    "Dovolená",
+  ]);
+  assert.equal(rows[1][5].fillColor, "#fdecef");
+  assert.equal(plain(rows[2][1]), "Dohoda Č  DPČ");
 });
 
 test("holiday days show the holiday and svátek", () => {
