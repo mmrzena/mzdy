@@ -158,7 +158,7 @@ export const EntryRow = memo(function EntryRow({
           <Button
             variant="ghost"
             size="icon-sm"
-            title="Rozdělit na dvě části (např. půl dne dovolená)"
+            title="Rozdělit na dvě části – např. dopoledne práce, odpoledne dovolená"
             aria-label={`Rozdělit ${who} na dvě části`}
             disabled={splitShift(entry) === null}
             onClick={() => splitEntry(month, date, index)}
