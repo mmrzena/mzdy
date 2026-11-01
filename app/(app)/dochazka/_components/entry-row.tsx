@@ -76,7 +76,7 @@ export const EntryRow = memo(function EntryRow({
     updateEntry(month, date, index, patch);
 
   return (
-    <div className="-mx-2 grid gap-1 rounded-md px-2 py-1 transition-colors hover:bg-accent/30">
+    <div className="-mx-2 grid gap-1 rounded-md px-2 py-1 transition-colors hover:bg-accent/50">
       <div className={cn(ROW_PHONE, ROW_GRID)}>
         <div className="flex min-w-0 items-center gap-2 max-md:row-start-1">
           {part > 1 ? (
@@ -144,7 +144,7 @@ export const EntryRow = memo(function EntryRow({
           aria-label={`${who} přítomnost`}
           title={STATUS_LABEL[entry.status]}
           className={cn(
-            "w-full max-md:col-span-2 md:w-[9.5rem]",
+            "w-full bg-card max-md:col-span-2 md:w-[9.5rem] dark:bg-card",
             !present && "border-warning bg-warning/15 font-medium",
           )}
           onChange={(event) => update({ status: event.target.value as Status })}

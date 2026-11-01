@@ -31,7 +31,10 @@ export function TimeInput({
       disabled={disabled}
       aria-invalid={invalid || undefined}
       aria-label={props["aria-label"]}
-      className={cn("h-8 w-[6.5rem] px-2 tabular-nums", className)}
+      className={cn(
+        "h-8 w-[6.5rem] bg-card px-2 tabular-nums dark:bg-card",
+        className,
+      )}
       onChange={(event) => {
         const next = event.target.value;
         if (next) onChange(next);
