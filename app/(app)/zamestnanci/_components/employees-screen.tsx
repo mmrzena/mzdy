@@ -129,7 +129,7 @@ function EmployeeCard(props: RowActions) {
   return (
     <li
       className={cn(
-        "grid gap-3 px-4 py-3",
+        "grid gap-3 px-4 py-3 transition-colors hover:bg-accent",
         !employee.active && "text-muted-foreground",
       )}
     >
@@ -240,7 +240,10 @@ export function EmployeesScreen() {
               {employees.map((employee, index) => (
                 <TableRow
                   key={employee.id}
-                  className={cn(!employee.active && "text-muted-foreground")}
+                  className={cn(
+                    "hover:bg-accent",
+                    !employee.active && "text-muted-foreground",
+                  )}
                 >
                   <TableCell>
                     <MoveButtons
