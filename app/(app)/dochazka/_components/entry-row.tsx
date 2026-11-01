@@ -28,8 +28,15 @@ import {
 import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
 
+/** The six columns of a day's table from `md` up. */
 export const ROW_GRID =
-  "grid grid-cols-[minmax(10rem,1fr)_6.5rem_6.5rem_15.5rem_9.5rem_4.25rem] items-center gap-2";
+  "md:grid-cols-[minmax(10rem,1fr)_6.5rem_6.5rem_15.5rem_9.5rem_4.25rem] md:items-center";
+
+/**
+ * Below `md` each entry is a block: name and actions on the first line, then
+ * the times, the break and the status on their own lines.
+ */
+const ROW_PHONE = "grid grid-cols-[1fr_auto] gap-2";
 
 /**
  * One entry of a day. When the employee's day is split, `part` / `parts` say
@@ -69,8 +76,8 @@ export const EntryRow = memo(function EntryRow({
 
   return (
     <div className="grid gap-1">
-      <div className={ROW_GRID}>
-        <div className="flex min-w-0 items-center gap-2">
+      <div className={cn(ROW_PHONE, ROW_GRID)}>
+        <div className="flex min-w-0 items-center gap-2 max-md:row-start-1">
           {part > 1 ? (
             <span className="flex items-center gap-1 pl-3 text-sm text-muted-foreground">
               <RiCornerDownRightLine className="size-4" aria-hidden="true" />
@@ -95,36 +102,48 @@ export const EntryRow = memo(function EntryRow({
             </>
           )}
         </div>
-        <TimeInput
-          required
-          value={entry.start}
-          onChange={(start) => start && update({ start })}
-          disabled={!timesEditable}
-          invalid={Boolean(issue)}
-          aria-label={`${who} od`}
-        />
-        <TimeInput
-          required
-          value={entry.end}
-          onChange={(end) => end && update({ end })}
-          disabled={!timesEditable}
-          invalid={Boolean(issue)}
-          aria-label={`${who} do`}
-        />
-        <BreakInput
-          breakStart={entry.breakStart}
-          breakEnd={entry.breakEnd}
-          onChange={(breakStart, breakEnd) => update({ breakStart, breakEnd })}
-          disabled={!timesEditable}
-          label={who}
-        />
+        <div className="flex items-center gap-2 max-md:col-span-2 md:contents">
+          <TimeInput
+            required
+            value={entry.start}
+            onChange={(start) => start && update({ start })}
+            disabled={!timesEditable}
+            invalid={Boolean(issue)}
+            aria-label={`${who} od`}
+          />
+          <span className="text-muted-foreground md:hidden" aria-hidden="true">
+            –
+          </span>
+          <TimeInput
+            required
+            value={entry.end}
+            onChange={(end) => end && update({ end })}
+            disabled={!timesEditable}
+            invalid={Boolean(issue)}
+            aria-label={`${who} do`}
+          />
+        </div>
+        <div className="flex items-center gap-2 max-md:col-span-2">
+          <span className="w-10 text-xs text-muted-foreground md:hidden">
+            Pauza
+          </span>
+          <BreakInput
+            breakStart={entry.breakStart}
+            breakEnd={entry.breakEnd}
+            onChange={(breakStart, breakEnd) =>
+              update({ breakStart, breakEnd })
+            }
+            disabled={!timesEditable}
+            label={who}
+          />
+        </div>
         <NativeSelect
           size="sm"
           value={entry.status}
           aria-label={`${who} přítomnost`}
           title={STATUS_LABEL[entry.status]}
           className={cn(
-            "w-[9.5rem]",
+            "w-full max-md:col-span-2 md:w-[9.5rem]",
             !present && "border-warning bg-warning/15 font-medium",
           )}
           onChange={(event) => update({ status: event.target.value as Status })}
@@ -135,7 +154,7 @@ export const EntryRow = memo(function EntryRow({
             </NativeSelectOption>
           ))}
         </NativeSelect>
-        <div className="flex items-center">
+        <div className="flex items-center max-md:col-start-2 max-md:row-start-1 max-md:justify-self-end">
           <Button
             variant="ghost"
             size="icon-sm"

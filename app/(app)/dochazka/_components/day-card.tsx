@@ -6,7 +6,7 @@ import {
   RiMore2Line,
   RiRefreshLine,
 } from "@remixicon/react";
-import { Fragment, memo } from "react";
+import { memo } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,42 +40,40 @@ import { EntryRow, ROW_GRID } from "./entry-row";
 
 const NO_ENTRIES: Entry[] = [];
 
-type DayRow = {
-  entry: Entry;
-  index: number;
-  part: number;
-  parts: number;
-  /** Set on the last part of a split day: all parts' minutes, null if any is invalid. */
-  dayMinutes?: number | null;
+type DayRow = { entry: Entry; index: number; part: number };
+
+type DayGroup = {
+  employeeId: string;
+  rows: DayRow[];
+  /** All parts' minutes when the day is split; null when a part is invalid. */
+  dayMinutes: number | null | undefined;
 };
 
 /**
- * Number the parts of each employee's day (entries are kept grouped by
- * employee) and give the last part of a split day the day's total hours.
+ * The day's entries grouped per employee (they are kept adjacent), with the
+ * parts numbered and, for a split day, the day's total hours.
  */
-function dayRows(entries: Entry[]): DayRow[] {
-  const parts = new Map<string, number>();
-  for (const e of entries) {
-    parts.set(e.employeeId, (parts.get(e.employeeId) ?? 0) + 1);
-  }
-  const seen = new Map<string, number>();
-  const minutes = new Map<string, number | null>();
-  return entries.map((entry, index) => {
-    const part = (seen.get(entry.employeeId) ?? 0) + 1;
-    seen.set(entry.employeeId, part);
-    const count = parts.get(entry.employeeId) ?? 1;
-    const own = shiftMinutes(entry);
-    const soFar = minutes.get(entry.employeeId);
-    const total = own === null || soFar === null ? null : (soFar ?? 0) + own;
-    minutes.set(entry.employeeId, total);
-    return {
-      entry,
-      index,
-      part,
-      parts: count,
-      dayMinutes: count > 1 && part === count ? total : undefined,
-    };
+function dayGroups(entries: Entry[]): DayGroup[] {
+  const groups: DayGroup[] = [];
+  entries.forEach((entry, index) => {
+    const last = groups.at(-1);
+    const group =
+      last && last.employeeId === entry.employeeId
+        ? last
+        : { employeeId: entry.employeeId, rows: [], dayMinutes: undefined };
+    if (group !== last) groups.push(group);
+    group.rows.push({ entry, index, part: group.rows.length + 1 });
   });
+  for (const group of groups) {
+    if (group.rows.length < 2) continue;
+    let total: number | null = 0;
+    for (const { entry } of group.rows) {
+      const own = shiftMinutes(entry);
+      total = own === null || total === null ? null : total + own;
+    }
+    group.dayMinutes = total;
+  }
+  return groups;
 }
 
 export const DayCard = memo(function DayCard({
@@ -104,7 +102,7 @@ export const DayCard = memo(function DayCard({
   const addable = employees.filter((e) => !present.has(e.id));
   const title = `${WEEKDAY_NAMES[day.weekdayIndex]} ${formatShortDate(day.date)}`;
   const isEmpty = entries.length === 0;
-  const rows = dayRows(entries);
+  const groups = dayGroups(entries);
 
   return (
     <Card
@@ -184,10 +182,13 @@ export const DayCard = memo(function DayCard({
       </div>
 
       {isEmpty ? null : (
-        <div className="overflow-x-auto px-4">
-          <div className="grid min-w-[52.5rem] gap-2">
+        <div className="px-4 md:overflow-x-auto">
+          <div className="grid gap-2 max-md:divide-y md:min-w-[52.5rem]">
             <div
-              className={cn(ROW_GRID, "text-xs text-muted-foreground")}
+              className={cn(
+                ROW_GRID,
+                "hidden text-xs text-muted-foreground md:grid",
+              )}
               aria-hidden="true"
             >
               <span>Zaměstnanec</span>
@@ -197,17 +198,20 @@ export const DayCard = memo(function DayCard({
               <span>Přítomnost</span>
               <span />
             </div>
-            {rows.map(({ entry, index, part, parts, dayMinutes }) => (
-              <Fragment key={`${entry.employeeId}:${part}`}>
-                <EntryRow
-                  month={month}
-                  date={day.date}
-                  index={index}
-                  entry={entry}
-                  employee={byId.get(entry.employeeId)}
-                  part={part}
-                  parts={parts}
-                />
+            {groups.map(({ employeeId, rows, dayMinutes }) => (
+              <div key={employeeId} className="grid gap-2 max-md:py-3">
+                {rows.map(({ entry, index, part }) => (
+                  <EntryRow
+                    key={part}
+                    month={month}
+                    date={day.date}
+                    index={index}
+                    entry={entry}
+                    employee={byId.get(employeeId)}
+                    part={part}
+                    parts={rows.length}
+                  />
+                ))}
                 {dayMinutes !== undefined ? (
                   <p className="-mt-1 pl-3 text-xs text-muted-foreground">
                     Celkem za den
@@ -216,7 +220,7 @@ export const DayCard = memo(function DayCard({
                       : ` ${formatHours(dayMinutes)} h`}
                   </p>
                 ) : null}
-              </Fragment>
+              </div>
             ))}
           </div>
         </div>

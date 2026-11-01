@@ -232,8 +232,8 @@ function EmployeeForm({
               </div>
             </div>
 
-            <div className="grid gap-1 rounded-lg border p-2">
-              <div className="hidden grid-cols-[7.5rem_repeat(2,6.5rem)_auto] gap-2 px-1 text-xs text-muted-foreground sm:grid">
+            <div className="grid gap-1 rounded-lg border p-2 max-sm:divide-y">
+              <div className="hidden grid-cols-[6.5rem_repeat(2,6.5rem)_auto] gap-2 px-1 text-xs text-muted-foreground sm:grid">
                 <span>Den</span>
                 <span>Od</span>
                 <span>Do</span>
@@ -244,7 +244,9 @@ function EmployeeForm({
                 const error = form.formState.errors.week?.[i];
                 return (
                   <div key={dayName} className="grid gap-1">
-                    <div className="grid grid-cols-[7.5rem_repeat(2,6.5rem)] items-center gap-2 px-1 sm:grid-cols-[7.5rem_repeat(2,6.5rem)_auto]">
+                    {/* One block per day on phones (name, times, break on
+                        their own lines); a single row from `sm` up. */}
+                    <div className="grid gap-2 px-1 py-1 sm:grid-cols-[6.5rem_repeat(2,6.5rem)_auto] sm:items-center sm:py-0">
                       <Controller
                         control={form.control}
                         name={`week.${i}.works`}
@@ -266,24 +268,39 @@ function EmployeeForm({
                           </div>
                         )}
                       />
-                      {(["start", "end"] as const).map((key) => (
-                        <Controller
-                          key={key}
-                          control={form.control}
-                          name={`week.${i}.${key}`}
-                          render={({ field }) => (
-                            <TimeInput
-                              required
-                              value={field.value}
-                              onChange={field.onChange}
-                              disabled={!works}
-                              invalid={works && Boolean(error)}
-                              aria-label={`${dayName} ${key === "start" ? "od" : "do"}`}
-                            />
-                          )}
-                        />
-                      ))}
-                      <div className="col-span-3 sm:col-span-1">
+                      <div className="flex items-center gap-2 sm:contents">
+                        {(["start", "end"] as const).map((key) => (
+                          <Controller
+                            key={key}
+                            control={form.control}
+                            name={`week.${i}.${key}`}
+                            render={({ field }) => (
+                              <>
+                                {key === "end" ? (
+                                  <span
+                                    className="text-muted-foreground sm:hidden"
+                                    aria-hidden="true"
+                                  >
+                                    –
+                                  </span>
+                                ) : null}
+                                <TimeInput
+                                  required
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  disabled={!works}
+                                  invalid={works && Boolean(error)}
+                                  aria-label={`${dayName} ${key === "start" ? "od" : "do"}`}
+                                />
+                              </>
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-10 text-xs text-muted-foreground sm:hidden">
+                          Pauza
+                        </span>
                         <BreakInput
                           breakStart={week?.[i]?.breakStart ?? null}
                           breakEnd={week?.[i]?.breakEnd ?? null}

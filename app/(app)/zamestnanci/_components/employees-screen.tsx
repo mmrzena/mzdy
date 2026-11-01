@@ -51,11 +51,115 @@ import {
 import { EmployeeDialog } from "./employee-dialog";
 import { weekSummary } from "./week-summary";
 
+type RowActions = {
+  employees: Employee[];
+  index: number;
+  employee: Employee;
+  onEdit: (employee: Employee) => void;
+  onDelete: (employee: Employee) => void;
+};
+
+function MoveButtons({ employees, index, employee }: RowActions) {
+  const { moveEmployee } = useAttendanceStore.getState();
+  return (
+    <div className="flex">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={`Posunout ${employee.name} nahoru`}
+        disabled={index === 0}
+        onClick={() => moveEmployee(employee.id, -1)}
+      >
+        <RiArrowUpLine />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={`Posunout ${employee.name} dolů`}
+        disabled={index === employees.length - 1}
+        onClick={() => moveEmployee(employee.id, 1)}
+      >
+        <RiArrowDownLine />
+      </Button>
+    </div>
+  );
+}
+
+function ActiveSwitch({ employee }: { employee: Employee }) {
+  const { setEmployeeActive } = useAttendanceStore.getState();
+  return (
+    <Switch
+      checked={employee.active}
+      aria-label={`${employee.name} je aktivní`}
+      onCheckedChange={(active) => setEmployeeActive(employee.id, active)}
+    />
+  );
+}
+
+function ActionsMenu({ employee, onEdit, onDelete }: RowActions) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Akce pro ${employee.name}`}
+        >
+          <RiMore2Line />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => onEdit(employee)}>
+          <RiPencilLine /> Upravit
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          variant="destructive"
+          onSelect={() => onDelete(employee)}
+        >
+          <RiDeleteBinLine /> Smazat
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** One employee as a card, for phones where the table would not fit. */
+function EmployeeCard(props: RowActions) {
+  const { employee } = props;
+  return (
+    <li
+      className={cn(
+        "grid gap-3 px-4 py-3",
+        !employee.active && "text-muted-foreground",
+      )}
+    >
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{employee.name}</span>
+            <ContractBadge contract={employee.contract} />
+          </div>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {weekSummary(employee.week)}
+          </p>
+        </div>
+        <ActionsMenu {...props} />
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <MoveButtons {...props} />
+        <div className="flex items-center gap-2 text-sm">
+          <span aria-hidden="true">Aktivní</span>
+          <ActiveSwitch employee={employee} />
+        </div>
+      </div>
+    </li>
+  );
+}
+
 export function EmployeesScreen() {
   const hydrated = useStoreHydrated();
   const employees = useAttendanceStore((s) => s.employees);
-  const { moveEmployee, setEmployeeActive, deleteEmployee } =
-    useAttendanceStore.getState();
+  const { deleteEmployee } = useAttendanceStore.getState();
 
   const [editing, setEditing] = useState<Employee | "new" | null>(null);
   const [deleting, setDeleting] = useState<Employee | null>(null);
@@ -105,7 +209,19 @@ export function EmployeesScreen() {
         </Empty>
       ) : (
         <Card className="py-0">
-          <Table>
+          <ul className="divide-y md:hidden">
+            {employees.map((employee, index) => (
+              <EmployeeCard
+                key={employee.id}
+                employees={employees}
+                index={index}
+                employee={employee}
+                onEdit={setEditing}
+                onDelete={requestDelete}
+              />
+            ))}
+          </ul>
+          <Table className="max-md:hidden">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-20">
@@ -127,26 +243,13 @@ export function EmployeesScreen() {
                   className={cn(!employee.active && "text-muted-foreground")}
                 >
                   <TableCell>
-                    <div className="flex">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Posunout ${employee.name} nahoru`}
-                        disabled={index === 0}
-                        onClick={() => moveEmployee(employee.id, -1)}
-                      >
-                        <RiArrowUpLine />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Posunout ${employee.name} dolů`}
-                        disabled={index === employees.length - 1}
-                        onClick={() => moveEmployee(employee.id, 1)}
-                      >
-                        <RiArrowDownLine />
-                      </Button>
-                    </div>
+                    <MoveButtons
+                      employees={employees}
+                      index={index}
+                      employee={employee}
+                      onEdit={setEditing}
+                      onDelete={requestDelete}
+                    />
                   </TableCell>
                   <TableCell className="font-medium">{employee.name}</TableCell>
                   <TableCell>
@@ -154,37 +257,16 @@ export function EmployeesScreen() {
                   </TableCell>
                   <TableCell>{weekSummary(employee.week)}</TableCell>
                   <TableCell>
-                    <Switch
-                      checked={employee.active}
-                      aria-label={`${employee.name} je aktivní`}
-                      onCheckedChange={(active) =>
-                        setEmployeeActive(employee.id, active)
-                      }
-                    />
+                    <ActiveSwitch employee={employee} />
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Akce pro ${employee.name}`}
-                        >
-                          <RiMore2Line />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setEditing(employee)}>
-                          <RiPencilLine /> Upravit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onSelect={() => requestDelete(employee)}
-                        >
-                          <RiDeleteBinLine /> Smazat
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <ActionsMenu
+                      employees={employees}
+                      index={index}
+                      employee={employee}
+                      onEdit={setEditing}
+                      onDelete={requestDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

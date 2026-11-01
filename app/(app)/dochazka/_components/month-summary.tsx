@@ -91,7 +91,9 @@ export function MonthSummaryTable({ month }: { month: string }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Zaměstnanec</TableHead>
+                <TableHead className="sticky left-0 z-10 bg-card">
+                  Zaměstnanec
+                </TableHead>
                 <TableHead className="text-right" title="Odpracované dny">
                   Dny
                 </TableHead>
@@ -111,7 +113,7 @@ export function MonthSummaryTable({ month }: { month: string }) {
                   key={employee.id}
                   className={cn(!employee.active && "text-muted-foreground")}
                 >
-                  <TableCell>
+                  <TableCell className="sticky left-0 z-10 bg-card">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{employee.name}</span>
                       <ContractBadge contract={employee.contract} />
@@ -123,7 +125,10 @@ export function MonthSummaryTable({ month }: { month: string }) {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell className="font-semibold">Celkem</TableCell>
+                {/* Opaque like the other pinned cells, tinted like the footer. */}
+                <TableCell className="sticky left-0 z-10 bg-card font-semibold before:absolute before:inset-0 before:-z-10 before:bg-muted/50">
+                  Celkem
+                </TableCell>
                 <SummaryCells totals={summary.total} />
               </TableRow>
             </TableFooter>
