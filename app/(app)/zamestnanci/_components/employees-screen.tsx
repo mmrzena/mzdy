@@ -129,7 +129,7 @@ function EmployeeCard(props: RowActions) {
   return (
     <li
       className={cn(
-        "grid gap-3 px-4 py-3 transition-colors hover:bg-accent",
+        "grid gap-3 px-4 py-3 transition-colors hover:bg-accent/50",
         !employee.active && "text-muted-foreground",
       )}
     >
@@ -241,7 +241,7 @@ export function EmployeesScreen() {
                 <TableRow
                   key={employee.id}
                   className={cn(
-                    "hover:bg-accent",
+                    "hover:bg-accent/50",
                     !employee.active && "text-muted-foreground",
                   )}
                 >

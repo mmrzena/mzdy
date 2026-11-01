@@ -112,13 +112,13 @@ export function MonthSummaryTable({ month }: { month: string }) {
                 <TableRow
                   key={employee.id}
                   className={cn(
-                    "group hover:bg-accent",
+                    "group hover:bg-accent/50",
                     !employee.active && "text-muted-foreground",
                   )}
                 >
-                  {/* Pinned, so it paints its own background and must
-                      follow the row's hover. */}
-                  <TableCell className="sticky left-0 z-10 bg-card transition-colors group-hover:bg-accent">
+                  {/* Pinned, so it paints an opaque background and takes the
+                      row's translucent hover as an overlay. */}
+                  <TableCell className="sticky left-0 z-10 bg-card before:absolute before:inset-0 before:-z-10 before:transition-colors group-hover:before:bg-accent/50">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{employee.name}</span>
                       <ContractBadge contract={employee.contract} />

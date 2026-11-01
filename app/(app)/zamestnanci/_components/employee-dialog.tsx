@@ -245,7 +245,7 @@ function EmployeeForm({
                 return (
                   <div
                     key={dayName}
-                    className="grid gap-1 rounded-md px-1 py-1 transition-colors hover:bg-accent max-sm:py-2"
+                    className="grid gap-1 rounded-md px-1 py-1 transition-colors hover:bg-accent/50 max-sm:py-2"
                   >
                     {/* One block per day on phones (name, times, break on
                         their own lines); a single row from `sm` up. */}

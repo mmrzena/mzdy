@@ -75,7 +75,7 @@ export const EntryRow = memo(function EntryRow({
     updateEntry(month, date, index, patch);
 
   return (
-    <div className="-mx-2 grid gap-1 rounded-md px-2 py-1 transition-colors hover:bg-accent">
+    <div className="-mx-2 grid gap-1 rounded-md px-2 py-1 transition-colors hover:bg-accent/50">
       <div className={cn(ROW_PHONE, ROW_GRID)}>
         <div className="flex min-w-0 items-center gap-2 max-md:row-start-1">
           {part > 1 ? (
