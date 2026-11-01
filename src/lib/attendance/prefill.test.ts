@@ -6,6 +6,7 @@ import {
   CLINIC_WEEK,
   EMPTY_WEEK,
   type Employee,
+  mergeShifts,
   shiftIssue,
   splitShift,
 } from "./model";
@@ -148,4 +149,31 @@ test("a status range marks every part of a split day", () => {
     next.days["2026-09-01"].map((e) => e.status),
     ["pn", "pn"],
   );
+});
+
+test("merging the parts restores the shift, gap becoming the break", () => {
+  const shift = {
+    start: "07:00",
+    end: "16:00",
+    breakStart: "12:00",
+    breakEnd: "12:30",
+  };
+  const parts = splitShift(shift);
+  assert.ok(parts);
+  assert.deepEqual(mergeShifts(parts[0], parts[1]), shift);
+
+  const noBreak = { ...shift, breakStart: null, breakEnd: null };
+  const halves = splitShift(noBreak);
+  assert.ok(halves);
+  assert.deepEqual(mergeShifts(halves[0], halves[1]), noBreak);
+
+  // a break inside one part is kept
+  assert.deepEqual(
+    mergeShifts(
+      { start: "07:00", end: "11:00", breakStart: "09:00", breakEnd: "09:15" },
+      { start: "11:00", end: "15:00", breakStart: null, breakEnd: null },
+    ),
+    { start: "07:00", end: "15:00", breakStart: "09:00", breakEnd: "09:15" },
+  );
+  assert.equal(mergeShifts(parts[1], parts[0]), null);
 });

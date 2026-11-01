@@ -168,8 +168,13 @@ export const EntryRow = memo(function EntryRow({
           <Button
             variant="ghost"
             size="icon-sm"
+            title={
+              split
+                ? "Zrušit tuto část; její čas připadne sousední části"
+                : undefined
+            }
             aria-label={
-              split ? `Odebrat ${who}` : `Odebrat ${name} z tohoto dne`
+              split ? `Zrušit ${who}` : `Odebrat ${name} z tohoto dne`
             }
             onClick={() => removeEntry(month, date, index)}
           >

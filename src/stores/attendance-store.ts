@@ -8,6 +8,7 @@ import {
   type Employee,
   type Entry,
   type MonthSheet,
+  mergeShifts,
   splitShift,
 } from "@/lib/attendance/model";
 import {
@@ -50,6 +51,8 @@ type AttendanceState = AttendanceData & {
     patch: Partial<Omit<Entry, "employeeId">>,
   ) => void;
   addEntry: (month: string, day: CalendarDay, employeeId: string) => void;
+  /** Remove an entry; a part of a split day is folded into its neighbour
+   *  instead, so the day goes back to one row (see mergeShifts). */
   removeEntry: (month: string, date: string, index: number) => void;
   /** Cut an entry into two parts (see splitShift); no-op when it can't be. */
   splitEntry: (month: string, date: string, index: number) => void;
@@ -77,6 +80,27 @@ function withDay(
       days: { ...sheet.days, [date]: update(sheet.days[date] ?? []) },
     },
   };
+}
+
+/**
+ * Drop the entry at `index`. When it is one part of an employee's split day,
+ * the neighbouring part (the previous one, else the next) absorbs its time
+ * instead, so removing a part undoes the split.
+ */
+function removeOrMerge(entries: Entry[], index: number): Entry[] {
+  const entry = entries[index];
+  if (!entry) return entries;
+  const sibling = (i: number) =>
+    entries[i]?.employeeId === entry.employeeId ? i : -1;
+  const into = sibling(index - 1) >= 0 ? index - 1 : sibling(index + 1);
+  if (into < 0) return entries.filter((_, i) => i !== index);
+  const [first, second] =
+    into < index ? [entries[into], entry] : [entry, entries[into]];
+  const merged = mergeShifts(first, second);
+  if (!merged) return entries.filter((_, i) => i !== index);
+  return entries.flatMap((e, i) =>
+    i === index ? [] : i === into ? [{ ...e, ...merged }] : [e],
+  );
 }
 
 export const useAttendanceStore = create<AttendanceState>()(
@@ -152,7 +176,7 @@ export const useAttendanceStore = create<AttendanceState>()(
       removeEntry: (month, date, index) =>
         set((s) => ({
           months: withDay(s.months, month, date, (entries) =>
-            entries.filter((_, i) => i !== index),
+            removeOrMerge(entries, index),
           ),
         })),
       splitEntry: (month, date, index) =>

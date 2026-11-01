@@ -242,3 +242,24 @@ export function splitShift(shift: Shift): [Shift, Shift] | null {
     },
   ];
 }
+
+/**
+ * Join two consecutive parts of a day back into one shift, the reverse of
+ * splitShift: the result spans both, keeps the lunch break either part had,
+ * and when the parts don't touch, the gap between them (a break the split
+ * was cut at) becomes the break again. Null when `b` doesn't follow `a`.
+ */
+export function mergeShifts(a: Shift, b: Shift): Shift | null {
+  if (minutes(b.start) < minutes(a.end)) return null;
+  const kept = [a, b].find((p) => p.breakStart !== null && p.breakEnd !== null);
+  const gap = minutes(b.start) > minutes(a.end);
+  return {
+    start: a.start,
+    end: b.end,
+    ...(kept
+      ? { breakStart: kept.breakStart, breakEnd: kept.breakEnd }
+      : gap
+        ? { breakStart: a.end, breakEnd: b.start }
+        : NO_BREAK),
+  };
+}
