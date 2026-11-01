@@ -232,7 +232,7 @@ function EmployeeForm({
               </div>
             </div>
 
-            <div className="grid gap-1 rounded-lg border p-2 max-sm:divide-y">
+            <div className="grid rounded-lg border p-1 max-sm:divide-y">
               <div className="hidden grid-cols-[6.5rem_repeat(2,6.5rem)_auto] gap-2 px-1 text-xs text-muted-foreground sm:grid">
                 <span>Den</span>
                 <span>Od</span>
@@ -243,10 +243,13 @@ function EmployeeForm({
                 const works = week?.[i]?.works ?? false;
                 const error = form.formState.errors.week?.[i];
                 return (
-                  <div key={dayName} className="grid gap-1">
+                  <div
+                    key={dayName}
+                    className="grid gap-1 rounded-md px-1 py-1 transition-colors hover:bg-accent max-sm:py-2"
+                  >
                     {/* One block per day on phones (name, times, break on
                         their own lines); a single row from `sm` up. */}
-                    <div className="grid gap-2 px-1 py-1 sm:grid-cols-[6.5rem_repeat(2,6.5rem)_auto] sm:items-center sm:py-0">
+                    <div className="grid gap-2 sm:grid-cols-[6.5rem_repeat(2,6.5rem)_auto] sm:items-center">
                       <Controller
                         control={form.control}
                         name={`week.${i}.works`}
@@ -319,7 +322,7 @@ function EmployeeForm({
                       </div>
                     </div>
                     {works && error?.end?.message ? (
-                      <p className="px-1 text-xs text-destructive">
+                      <p className="text-xs text-destructive">
                         {error.end.message}
                       </p>
                     ) : null}
