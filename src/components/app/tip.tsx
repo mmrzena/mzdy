@@ -9,19 +9,20 @@ import {
 } from "@/components/ui/tooltip";
 
 /**
- * A hover hint for a control, usually an icon-only button. The child is the
- * trigger (it must accept a ref and props, as every shadcn control does), so
- * wrap a menu trigger as `<Tip><DropdownMenuTrigger asChild><Button /></…>`.
+ * A hover hint for a control whose icon alone doesn't say enough. The child
+ * is the trigger (it must accept a ref and props, as every shadcn control
+ * does); a null label renders the child alone.
  */
 export function Tip({
   label,
   side,
   children,
 }: {
-  label: React.ReactNode;
+  label: React.ReactNode | null;
   side?: React.ComponentProps<typeof TooltipContent>["side"];
   children: React.ReactElement;
 }) {
+  if (label === null) return children;
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>

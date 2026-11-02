@@ -80,7 +80,7 @@ export const EntryRow = memo(function EntryRow({
         tip: "Spojit se sousední částí – den bude zase vcelku",
         label: `Spojit ${who} se sousední částí`,
       }
-    : { tip: "Odebrat z tohoto dne", label: `Odebrat ${name} z tohoto dne` };
+    : { tip: null, label: `Odebrat ${name} z tohoto dne` };
 
   return (
     <div className="-mx-2 grid gap-1 rounded-md px-2 py-1 transition-colors hover:bg-accent/50">

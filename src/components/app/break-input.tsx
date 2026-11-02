@@ -3,7 +3,6 @@
 import { RiAddLine, RiCloseLine } from "@remixicon/react";
 
 import { TimeInput } from "@/components/app/time-input";
-import { Tip } from "@/components/app/tip";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_BREAK } from "@/lib/attendance/model";
 
@@ -31,20 +30,19 @@ export function BreakInput({
     return (
       <div className="flex h-8 items-center gap-2">
         <span className="text-sm text-muted-foreground">Bez pauzy</span>
-        <Tip label="Přidat obědovou pauzu 12:00–12:30 – nepočítá se do odpracovaných hodin">
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            disabled={disabled}
-            aria-label={`${label}: přidat obědovou pauzu`}
-            onClick={() =>
-              onChange(DEFAULT_BREAK.breakStart, DEFAULT_BREAK.breakEnd)
-            }
-          >
-            <RiAddLine /> Přidat
-          </Button>
-        </Tip>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          disabled={disabled}
+          aria-label={`${label}: přidat obědovou pauzu`}
+          onClick={() =>
+            onChange(DEFAULT_BREAK.breakStart, DEFAULT_BREAK.breakEnd)
+          }
+        >
+          <RiAddLine /> Přidat
+        </Button>
       </div>
     );
   }
@@ -64,18 +62,17 @@ export function BreakInput({
         disabled={disabled}
         aria-label={`${label} pauza do`}
       />
-      <Tip label="Zrušit obědovou pauzu – celá doba se počítá jako odpracovaná">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          disabled={disabled}
-          aria-label={`${label}: zrušit obědovou pauzu`}
-          onClick={() => onChange(null, null)}
-        >
-          <RiCloseLine />
-        </Button>
-      </Tip>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        disabled={disabled}
+        aria-label={`${label}: zrušit obědovou pauzu`}
+        onClick={() => onChange(null, null)}
+      >
+        <RiCloseLine />
+      </Button>
     </div>
   );
 }

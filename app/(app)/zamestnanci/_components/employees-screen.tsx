@@ -14,7 +14,6 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/confirm-dialog";
 import { ContractBadge } from "@/components/app/contract-badge";
-import { Tip } from "@/components/app/tip";
 import { PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -63,28 +62,25 @@ function MoveButtons({ employee, index, count }: MoveProps) {
   const { moveEmployee } = useAttendanceStore.getState();
   return (
     <div className="flex">
-      <Tip label="Posunout nahoru – pořadí platí i v docházce">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`Posunout ${employee.name} nahoru`}
-          disabled={index === 0}
-          onClick={() => moveEmployee(employee.id, -1)}
-        >
-          <RiArrowUpLine />
-        </Button>
-      </Tip>
-      <Tip label="Posunout dolů – pořadí platí i v docházce">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`Posunout ${employee.name} dolů`}
-          disabled={index === count - 1}
-          onClick={() => moveEmployee(employee.id, 1)}
-        >
-          <RiArrowDownLine />
-        </Button>
-      </Tip>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={`Posunout ${employee.name} nahoru`}
+        disabled={index === 0}
+        onClick={() => moveEmployee(employee.id, -1)}
+      >
+        <RiArrowUpLine />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={`Posunout ${employee.name} dolů`}
+        disabled={index === count - 1}
+        onClick={() => moveEmployee(employee.id, 1)}
+      >
+        <RiArrowDownLine />
+      </Button>
     </div>
   );
 }
@@ -103,17 +99,16 @@ function ActiveSwitch({ employee }: { employee: Employee }) {
 function ActionsMenu({ employee, onEdit, onDelete }: MenuProps) {
   return (
     <DropdownMenu>
-      <Tip label="Upravit nebo smazat">
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Akce pro ${employee.name}`}
-          >
-            <RiMore2Line />
-          </Button>
-        </DropdownMenuTrigger>
-      </Tip>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Akce pro ${employee.name}`}
+        >
+          <RiMore2Line />
+        </Button>
+      </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end">
         <DropdownMenuItem onSelect={() => onEdit(employee)}>
           <RiPencilLine /> Upravit
