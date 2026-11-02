@@ -31,6 +31,8 @@ type AbsenceDialogProps = {
   month: string;
   days: CalendarDay[];
   employees: Employee[];
+  /** Preselected employee id ("" for none). */
+  initialEmployeeId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -50,11 +52,12 @@ export function AbsenceDialog({
   );
 }
 
-/** Mounted fresh on every open, so it always starts from a blank selection. */
+/** Mounted fresh on every open, so it always starts from the given selection. */
 function AbsenceForm({
   month,
   days,
   employees,
+  initialEmployeeId,
   onDone,
 }: Omit<AbsenceDialogProps, "open" | "onOpenChange"> & {
   onDone: () => void;
@@ -62,7 +65,7 @@ function AbsenceForm({
   const first = days[0].date;
   const last = days[days.length - 1].date;
 
-  const [employeeId, setEmployeeId] = useState("");
+  const [employeeId, setEmployeeId] = useState(initialEmployeeId);
   const [status, setStatus] = useState<Status>("dovolena");
   const [from, setFrom] = useState(first);
   const [to, setTo] = useState(first);

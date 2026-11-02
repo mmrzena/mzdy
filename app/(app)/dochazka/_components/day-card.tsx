@@ -68,12 +68,15 @@ export const DayCard = memo(function DayCard({
   day,
   employees,
   weekAgo,
+  onlyEmployeeId,
 }: {
   month: string;
   day: CalendarDay;
   employees: Employee[];
   /** The same weekday one week earlier, when it falls in this month. */
   weekAgo: string | null;
+  /** Show just this employee's rows; the day-wide actions hide meanwhile. */
+  onlyEmployeeId: string | null;
 }) {
   const entries = useAttendanceStore(
     (s) => s.months[month]?.days[day.date] ?? NO_ENTRIES,
@@ -86,10 +89,17 @@ export const DayCard = memo(function DayCard({
 
   const byId = new Map(employees.map((e) => [e.id, e]));
   const present = new Set(entries.map((e) => e.employeeId));
-  const addable = employees.filter((e) => !present.has(e.id));
+  const addable = employees.filter(
+    (e) =>
+      !present.has(e.id) &&
+      (onlyEmployeeId === null || e.id === onlyEmployeeId),
+  );
   const title = `${WEEKDAY_NAMES[day.weekdayIndex]} ${formatShortDate(day.date)}`;
-  const isEmpty = entries.length === 0;
-  const groups = groupDayEntries(entries);
+  // Grouped before filtering so each row keeps its index in the whole day.
+  const groups = groupDayEntries(entries).filter(
+    (g) => onlyEmployeeId === null || g.employeeId === onlyEmployeeId,
+  );
+  const isEmpty = groups.length === 0;
 
   return (
     <Card
@@ -135,38 +145,40 @@ export const DayCard = memo(function DayCard({
               ))}
             </NativeSelect>
           ) : null}
-          <DropdownMenu>
-            <Tip label="Další akce s tímto dnem">
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Akce pro ${title}`}
+          {onlyEmployeeId !== null ? null : (
+            <DropdownMenu>
+              <Tip label="Další akce s tímto dnem">
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Akce pro ${title}`}
+                  >
+                    <RiMore2Line />
+                  </Button>
+                </DropdownMenuTrigger>
+              </Tip>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => resetDay(month, day)}>
+                  <RiRefreshLine /> Obnovit podle rozvrhů
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!weekAgo || !weekAgoHasEntries}
+                  onSelect={() => weekAgo && copyDay(month, day.date, weekAgo)}
                 >
-                  <RiMore2Line />
-                </Button>
-              </DropdownMenuTrigger>
-            </Tip>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => resetDay(month, day)}>
-                <RiRefreshLine /> Obnovit podle rozvrhů
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={!weekAgo || !weekAgoHasEntries}
-                onSelect={() => weekAgo && copyDay(month, day.date, weekAgo)}
-              >
-                <RiFileCopyLine /> Zkopírovat z minulého týdne
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                disabled={isEmpty}
-                onSelect={() => clearDay(month, day.date)}
-              >
-                <RiDeleteBin6Line /> Vyprázdnit den
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <RiFileCopyLine /> Zkopírovat z minulého týdne
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={isEmpty}
+                  onSelect={() => clearDay(month, day.date)}
+                >
+                  <RiDeleteBin6Line /> Vyprázdnit den
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

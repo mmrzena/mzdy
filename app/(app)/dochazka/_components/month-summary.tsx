@@ -64,7 +64,14 @@ function SummaryCells({ totals }: { totals: StatusTotals }) {
   );
 }
 
-export function MonthSummaryTable({ month }: { month: string }) {
+export function MonthSummaryTable({
+  month,
+  onlyEmployeeId,
+}: {
+  month: string;
+  /** Show just this employee's row (and no total). */
+  onlyEmployeeId: string | null;
+}) {
   const sheet = useAttendanceStore((s) => s.months[month]);
   const employees = useAttendanceStore((s) => s.employees);
   const summary = useMemo(
@@ -72,6 +79,9 @@ export function MonthSummaryTable({ month }: { month: string }) {
     [sheet, employees],
   );
   if (!summary) return null;
+  const rows = summary.rows.filter(
+    ({ employee }) => onlyEmployeeId === null || employee.id === onlyEmployeeId,
+  );
 
   return (
     <div className="grid gap-3">
@@ -108,7 +118,7 @@ export function MonthSummaryTable({ month }: { month: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {summary.rows.map(({ employee, totals }) => (
+              {rows.map(({ employee, totals }) => (
                 <TableRow
                   key={employee.id}
                   className={cn(
@@ -128,15 +138,17 @@ export function MonthSummaryTable({ month }: { month: string }) {
                 </TableRow>
               ))}
             </TableBody>
-            <TableFooter>
-              <TableRow>
-                {/* Opaque like the other pinned cells, tinted like the footer. */}
-                <TableCell className="sticky left-0 z-10 bg-card font-semibold before:absolute before:inset-0 before:-z-10 before:bg-muted/50">
-                  Celkem
-                </TableCell>
-                <SummaryCells totals={summary.total} />
-              </TableRow>
-            </TableFooter>
+            {onlyEmployeeId !== null ? null : (
+              <TableFooter>
+                <TableRow>
+                  {/* Opaque like the other pinned cells, tinted like the footer. */}
+                  <TableCell className="sticky left-0 z-10 bg-card font-semibold before:absolute before:inset-0 before:-z-10 before:bg-muted/50">
+                    Celkem
+                  </TableCell>
+                  <SummaryCells totals={summary.total} />
+                </TableRow>
+              </TableFooter>
+            )}
           </Table>
         </div>
       </Card>
