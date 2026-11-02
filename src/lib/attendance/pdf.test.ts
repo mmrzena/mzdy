@@ -106,7 +106,7 @@ test("a split day marks its parts and keeps the absence's times", () => {
     "ano",
   ]);
   assert.deepEqual(rows[1].slice(1).map(plain), [
-    "2. část",
+    "",
     "12:30",
     "15:15",
     "—",

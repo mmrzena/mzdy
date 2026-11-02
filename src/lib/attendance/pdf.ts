@@ -169,14 +169,11 @@ function entryCells(
       ? `${sheetTime(entry.breakStart)} – ${sheetTime(entry.breakEnd)}`
       : null;
 
+  // Later parts of a split day sit right under the name, with no rule
+  // between them (see dayBlock), so the cell stays empty.
   const nameCell: TableCell =
     part > 1
-      ? {
-          fillColor: fill,
-          text: `${part}. část`,
-          color: C.muted,
-          italics: true,
-        }
+      ? { fillColor: fill, text: "" }
       : {
           fillColor: fill,
           text: [
@@ -236,12 +233,15 @@ function dayBlock(
         : []),
     ],
   };
-  const body: TableCell[][] = groupDayEntries(entries).flatMap((group) =>
+  const groups = groupDayEntries(entries);
+  const body: TableCell[][] = groups.flatMap((group) =>
     group.rows.map(({ entry, index, part }) => [
       index === 0 ? dayCell : {},
       ...entryCells(entry, byId.get(group.employeeId), part, group.rows.length),
     ]),
   );
+  /** Body rows that continue the row above (a later part of a split day). */
+  const continues = groups.flatMap((g) => g.rows.map(({ part }) => part > 1));
 
   return {
     unbreakable: true,
@@ -250,8 +250,11 @@ function dayBlock(
       ...cellPadding,
       paddingTop: (i: number) => (i === 0 ? 5 : 2.5),
       paddingBottom: (i: number) => (i === entries.length - 1 ? 5 : 2.5),
-      hLineWidth: (i: number, node) =>
-        i === node.table.body.length ? 0.75 : i === 0 ? 0 : 0.5,
+      hLineWidth: (i: number, node) => {
+        if (i === node.table.body.length) return 0.75;
+        if (i === 0 || continues[i]) return 0;
+        return 0.5;
+      },
       hLineColor: (i: number, node) =>
         i === node.table.body.length ? C.ruleStrong : C.rule,
       vLineWidth: () => 0,

@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  RiCloseLine,
-  RiCornerDownRightLine,
-  RiScissorsLine,
-} from "@remixicon/react";
+import { RiCloseLine, RiScissorsLine } from "@remixicon/react";
 import { memo } from "react";
 
 import { BreakInput } from "@/components/app/break-input";
@@ -86,12 +82,9 @@ export const EntryRow = memo(function EntryRow({
     <div className="-mx-2 grid gap-1 rounded-md px-2 py-1 transition-colors hover:bg-accent/50">
       <div className={cn(ROW_PHONE, ROW_GRID)}>
         <div className="flex min-w-0 items-center gap-2 max-md:row-start-1">
-          {part > 1 ? (
-            <span className="flex items-center gap-1 pl-3 text-sm text-muted-foreground">
-              <RiCornerDownRightLine className="size-4" aria-hidden="true" />
-              {part}. část
-            </span>
-          ) : (
+          {/* Later parts of a split day sit under the name in one block
+              (DayCard), so the cell stays empty. */}
+          {part > 1 ? null : (
             <>
               <span
                 className={cn(

@@ -197,7 +197,14 @@ export const DayCard = memo(function DayCard({
               <span />
             </div>
             {groups.map(({ employeeId, rows }) => (
-              <div key={employeeId} className="grid gap-2 max-md:py-3">
+              <div
+                key={employeeId}
+                className={cn(
+                  "grid gap-2 max-md:py-3",
+                  rows.length > 1 &&
+                    "-mx-2 rounded-lg border bg-muted/40 px-2 py-2 md:-mx-3 md:px-3",
+                )}
+              >
                 {rows.map(({ entry, index, part }) => (
                   <EntryRow
                     key={part}
