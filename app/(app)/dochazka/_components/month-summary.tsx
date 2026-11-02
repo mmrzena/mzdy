@@ -101,9 +101,12 @@ export function MonthSummaryTable({
       ) : null}
 
       <Card className="min-w-0 py-0">
-        <div className="overflow-x-auto">
+        {/* The card scrolls the table itself (both ways) so the header can
+            stick to its top; the Table's own wrapper must not scroll, or the
+            header would stick to that instead. */}
+        <div className="max-h-[calc(100dvh-16rem)] overflow-auto [&_[data-slot=table-container]]:overflow-visible">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-20 bg-card">
               <TableRow>
                 <TableHead className="sticky left-0 z-10 bg-card">
                   Zaměstnanec
