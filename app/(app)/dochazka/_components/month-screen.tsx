@@ -34,10 +34,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,13 +46,13 @@ import {
   weekAgoInMonth,
 } from "@/lib/attendance/calendar";
 import { downloadAttendancePdf } from "@/lib/attendance/pdf";
-import { cn } from "@/lib/utils";
 import {
   useAttendanceStore,
   useStoreHydrated,
 } from "@/stores/attendance-store";
 import { AbsenceDialog } from "./absence-dialog";
 import { DayCard } from "./day-card";
+import { EmployeeFilter, type EmployeeSelection } from "./employee-filter";
 import { MonthSummaryTable } from "./month-summary";
 
 type ConfirmKind = "refill" | "clear";
@@ -88,8 +84,10 @@ export function MonthScreen({ month }: { month: string }) {
     useAttendanceStore.getState();
 
   const [absenceOpen, setAbsenceOpen] = useState(false);
-  /** Employee id to show alone, "" for everyone. Survives month changes. */
-  const [onlyEmployee, setOnlyEmployee] = useState("");
+  /** Employees to show (and compare); null for everyone. Survives month changes. */
+  const [selection, setSelection] = useState<EmployeeSelection>(null);
+  const soleSelected =
+    selection && selection.size === 1 ? [...selection][0] : "";
   const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [exporting, setExporting] = useState(false);
   const ready = hydrated && started;
@@ -219,23 +217,11 @@ export function MonthScreen({ month }: { month: string }) {
               <RiTimeLine /> Souhrn hodin
             </TabsTrigger>
           </TabsList>
-          <NativeSelect
-            size="sm"
-            value={onlyEmployee}
-            aria-label="Zobrazit jen jednoho zaměstnance"
-            className={cn("w-56", onlyEmployee && "border-primary font-medium")}
-            onChange={(event) => setOnlyEmployee(event.target.value)}
-          >
-            <NativeSelectOption value="">
-              Všichni zaměstnanci
-            </NativeSelectOption>
-            {employees.map((e) => (
-              <NativeSelectOption key={e.id} value={e.id}>
-                {e.name}
-                {e.active ? "" : " (neaktivní)"}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <EmployeeFilter
+            employees={employees}
+            selected={selection}
+            onChange={setSelection}
+          />
         </div>
         {/* Kept mounted so switching to the summary keeps scroll position and
             doesn't rebuild ~300 rows; the summary itself stays lazy. */}
@@ -251,15 +237,12 @@ export function MonthScreen({ month }: { month: string }) {
               day={day}
               employees={employees}
               weekAgo={weekAgoInMonth(day, days)}
-              onlyEmployeeId={onlyEmployee || null}
+              selection={selection}
             />
           ))}
         </TabsContent>
         <TabsContent value="souhrn" className="min-w-0">
-          <MonthSummaryTable
-            month={month}
-            onlyEmployeeId={onlyEmployee || null}
-          />
+          <MonthSummaryTable month={month} selection={selection} />
         </TabsContent>
       </Tabs>
     );
@@ -321,7 +304,7 @@ export function MonthScreen({ month }: { month: string }) {
         month={month}
         days={days}
         employees={employees}
-        initialEmployeeId={onlyEmployee}
+        initialEmployeeId={soleSelected}
         open={absenceOpen}
         onOpenChange={setAbsenceOpen}
       />

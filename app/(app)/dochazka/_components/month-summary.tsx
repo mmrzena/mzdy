@@ -31,6 +31,7 @@ import {
 } from "@/lib/attendance/summary";
 import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
+import type { EmployeeSelection } from "./employee-filter";
 
 function TallyCell({ tally }: { tally: Tally }) {
   if (tally.days === 0) {
@@ -66,11 +67,11 @@ function SummaryCells({ totals }: { totals: StatusTotals }) {
 
 export function MonthSummaryTable({
   month,
-  onlyEmployeeId,
+  selection,
 }: {
   month: string;
-  /** Show just this employee's row (and no total). */
-  onlyEmployeeId: string | null;
+  /** Show just these employees' rows; a single row gets no total. */
+  selection: EmployeeSelection;
 }) {
   const sheet = useAttendanceStore((s) => s.months[month]);
   const employees = useAttendanceStore((s) => s.employees);
@@ -80,7 +81,7 @@ export function MonthSummaryTable({
   );
   if (!summary) return null;
   const rows = summary.rows.filter(
-    ({ employee }) => onlyEmployeeId === null || employee.id === onlyEmployeeId,
+    ({ employee }) => selection === null || selection.has(employee.id),
   );
 
   return (
@@ -138,7 +139,7 @@ export function MonthSummaryTable({
                 </TableRow>
               ))}
             </TableBody>
-            {onlyEmployeeId !== null ? null : (
+            {rows.length < 2 ? null : (
               <TableFooter>
                 <TableRow>
                   {/* Opaque like the other pinned cells, tinted like the footer. */}

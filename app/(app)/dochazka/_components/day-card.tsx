@@ -36,6 +36,7 @@ import { type DayPart, groupDayEntries } from "@/lib/attendance/prefill";
 import { formatHours } from "@/lib/attendance/summary";
 import { cn } from "@/lib/utils";
 import { useAttendanceStore } from "@/stores/attendance-store";
+import type { EmployeeSelection } from "./employee-filter";
 import { EntryRow, ROW_GRID } from "./entry-row";
 
 const NO_ENTRIES: Entry[] = [];
@@ -67,15 +68,15 @@ export const DayCard = memo(function DayCard({
   day,
   employees,
   weekAgo,
-  onlyEmployeeId,
+  selection,
 }: {
   month: string;
   day: CalendarDay;
   employees: Employee[];
   /** The same weekday one week earlier, when it falls in this month. */
   weekAgo: string | null;
-  /** Show just this employee's rows; the day-wide actions hide meanwhile. */
-  onlyEmployeeId: string | null;
+  /** Show just these employees' rows; the day-wide actions hide meanwhile. */
+  selection: EmployeeSelection;
 }) {
   const entries = useAttendanceStore(
     (s) => s.months[month]?.days[day.date] ?? NO_ENTRIES,
@@ -89,14 +90,12 @@ export const DayCard = memo(function DayCard({
   const byId = new Map(employees.map((e) => [e.id, e]));
   const present = new Set(entries.map((e) => e.employeeId));
   const addable = employees.filter(
-    (e) =>
-      !present.has(e.id) &&
-      (onlyEmployeeId === null || e.id === onlyEmployeeId),
+    (e) => !present.has(e.id) && (selection === null || selection.has(e.id)),
   );
   const title = `${WEEKDAY_NAMES[day.weekdayIndex]} ${formatShortDate(day.date)}`;
   // Grouped before filtering so each row keeps its index in the whole day.
   const groups = groupDayEntries(entries).filter(
-    (g) => onlyEmployeeId === null || g.employeeId === onlyEmployeeId,
+    (g) => selection === null || selection.has(g.employeeId),
   );
   const isEmpty = groups.length === 0;
 
@@ -144,7 +143,7 @@ export const DayCard = memo(function DayCard({
               ))}
             </NativeSelect>
           ) : null}
-          {onlyEmployeeId !== null ? null : (
+          {selection !== null ? null : (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
