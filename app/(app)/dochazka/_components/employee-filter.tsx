@@ -59,22 +59,26 @@ export function EmployeeFilter({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        {employees.map((e) => (
-          <DropdownMenuCheckboxItem
-            key={e.id}
-            checked={selected?.has(e.id) ?? false}
-            onCheckedChange={(checked) => toggle(e.id, checked === true)}
-            // Keep the menu open so several people can be ticked in one go.
-            onSelect={(event) => event.preventDefault()}
-          >
-            {e.name}
-            {e.active ? "" : " (neaktivní)"}
-          </DropdownMenuCheckboxItem>
-        ))}
-        <DropdownMenuSeparator />
         <DropdownMenuItem disabled={!selected} onSelect={() => onChange(null)}>
           Zobrazit všechny
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {/* The team can be twenty-odd people: the list scrolls on its own
+            under the reset, which stays in view. */}
+        <div className="max-h-72 overflow-y-auto">
+          {employees.map((e) => (
+            <DropdownMenuCheckboxItem
+              key={e.id}
+              checked={selected?.has(e.id) ?? false}
+              onCheckedChange={(checked) => toggle(e.id, checked === true)}
+              // Keep the menu open so several people can be ticked in one go.
+              onSelect={(event) => event.preventDefault()}
+            >
+              {e.name}
+              {e.active ? "" : " (neaktivní)"}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
