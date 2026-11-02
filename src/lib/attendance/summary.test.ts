@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { monthDays } from "./calendar";
 import { CLINIC_WEEK, EMPTY_WEEK, type Employee, shiftMinutes } from "./model";
 import { applyStatusRange, manualEntry, prefillMonth } from "./prefill";
-import { formatHours, summarizeMonth } from "./summary";
+import { formatHours, summarizeMonth, sumTotals } from "./summary";
 
 const nurse: Employee = {
   id: "a",
@@ -100,4 +100,15 @@ test("a split day counts once in days and part by part in hours", () => {
   assert.deepEqual(rows[0].totals.dovolena, { days: 1, minutes: 3.5 * 60 });
   assert.equal(total.pritomen.days, 21);
   assert.equal(total.dovolena.days, 1);
+});
+
+test("sumTotals adds up a subset of employees", () => {
+  const sheet = prefillMonth(days, employees);
+  sheet.days["2026-09-19"] = [manualEntry(helper, days[18])];
+  const { rows, total } = summarizeMonth(sheet, employees);
+  assert.deepEqual(sumTotals(rows.map((r) => r.totals)), total);
+  assert.deepEqual(sumTotals([rows[1].totals]).pritomen, {
+    days: 1,
+    minutes: 7.5 * 60,
+  });
 });

@@ -29,6 +29,18 @@ function emptyTotals(): StatusTotals {
   ) as StatusTotals;
 }
 
+/** The totals of several employees added up, e.g. for a filtered view. */
+export function sumTotals(rows: StatusTotals[]): StatusTotals {
+  const sum = emptyTotals();
+  for (const totals of rows) {
+    for (const status of STATUSES) {
+      sum[status].days += totals[status].days;
+      sum[status].minutes += totals[status].minutes;
+    }
+  }
+  return sum;
+}
+
 /**
  * Days and hours per status for each employee. Absences and holidays count
  * the hours of the shift planned for that day, which is how vacation is

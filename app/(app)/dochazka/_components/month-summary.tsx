@@ -27,6 +27,7 @@ import {
   HOURS_NOTE,
   type StatusTotals,
   summarizeMonth,
+  sumTotals,
   type Tally,
 } from "@/lib/attendance/summary";
 import { cn } from "@/lib/utils";
@@ -83,6 +84,8 @@ export function MonthSummaryTable({
   const rows = summary.rows.filter(
     ({ employee }) => selection === null || selection.has(employee.id),
   );
+  const total =
+    selection === null ? summary.total : sumTotals(rows.map((r) => r.totals));
 
   return (
     <div className="grid gap-3">
@@ -146,7 +149,7 @@ export function MonthSummaryTable({
                   <TableCell className="sticky left-0 z-10 bg-card font-semibold before:absolute before:inset-0 before:-z-10 before:bg-muted/50">
                     Celkem
                   </TableCell>
-                  <SummaryCells totals={summary.total} />
+                  <SummaryCells totals={total} />
                 </TableRow>
               </TableFooter>
             )}
